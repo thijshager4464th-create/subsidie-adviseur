@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from "react";
 
 const API = "https://api.nij-begun.project.abl.nu/api/v1";
 
-// ── helpers ──────────────────────────────────────────────────────────────────
-
 async function apiFetch(path) {
   const r = await fetch(`${API}${path}`, { headers: { Accept: "application/json" } });
   if (!r.ok) throw new Error(`API fout ${r.status}`);
@@ -23,30 +21,23 @@ async function apiPost(path, body) {
   return r.json();
 }
 
-// ── main component ────────────────────────────────────────────────────────────
-
 export default function App() {
-  const [measures, setMeasures] = useState([]);       // all from API
+  const [measures, setMeasures] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
-
   const [klant, setKlant] = useState("");
   const [adres, setAdres] = useState("");
-  const [type, setType] = useState("contractor");     // diy | contractor
-
-  const [selected, setSelected] = useState({});       // { code: quantity }
+  const [type, setType] = useState("contractor");
+  const [selected, setSelected] = useState({});
   const [zoek, setZoek] = useState("");
   const [activeTab, setActiveTab] = useState("catalog");
-
   const [calcResult, setCalcResult] = useState(null);
   const [calcLoading, setCalcLoading] = useState(false);
   const [calcError, setCalcError] = useState(null);
-
   const [pdfLoading, setPdfLoading] = useState(false);
   const fileRef = useRef();
 
-  // ── load catalog ────────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
@@ -64,7 +55,6 @@ export default function App() {
     })();
   }, []);
 
-  // ── derived ─────────────────────────────────────────────────────────────────
   const selectedCodes = Object.keys(selected);
   const selectedMeasures = measures.filter(m => selected[m.id] !== undefined);
 
@@ -78,7 +68,6 @@ export default function App() {
     );
   });
 
-  // group filtered by category
   const grouped = {};
   filtered.forEach(m => {
     const cat = m.attributes.category?.attributes?.name || "Overig";
@@ -86,7 +75,6 @@ export default function App() {
     grouped[cat].push(m);
   });
 
-  // ── actions ─────────────────────────────────────────────────────────────────
   const toggle = (code) => {
     setSelected(prev => {
       const next = { ...prev };
@@ -167,17 +155,13 @@ export default function App() {
     reader.readAsText(file);
   };
 
-  // ── totals from calcResult ───────────────────────────────────────────────
   const totalCost = calcResult?.meta?.totalCost ?? null;
 
-  // ── color map for categories ─────────────────────────────────────────────
   const CAT_COLORS = ["#1B4D3E","#2D6A4F","#1B4372","#6B2D8B","#B7580B","#8B2D2D","#2D6B8B"];
   const catColor = (name) => {
     const idx = categories.findIndex(c => c.attributes.name === name);
     return CAT_COLORS[idx % CAT_COLORS.length] || "#444";
   };
-
-  // ── render ───────────────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", background:"#f0f4f0", flexDirection:"column", gap:16 }}>
       <div style={{ width:48, height:48, border:"4px solid #2D6A4F", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
@@ -196,15 +180,12 @@ export default function App() {
 
   return (
     <div style={{ minHeight:"100vh", background:"#f0f4f1", fontFamily:"'Segoe UI', system-ui, sans-serif", color:"#1a1a2e" }}>
-
-      {/* ── HEADER ── */}
       <div style={{ background:"linear-gradient(135deg,#0d2e1f 0%,#1B4D3E 50%,#2D6A4F 100%)", color:"white", padding:"16px 28px", display:"flex", alignItems:"center", justifyContent:"space-between", boxShadow:"0 4px 24px rgba(0,0,0,0.25)" }}>
         <div>
           <div style={{ fontSize:20, fontWeight:800, letterSpacing:"-0.5px" }}>🏠 Nij Begun Subsidieadviseur</div>
           <div style={{ fontSize:11, opacity:0.65, marginTop:2 }}>{measures.length} maatregelen geladen via live API</div>
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-          {/* type toggle */}
           <div style={{ display:"flex", background:"rgba(255,255,255,0.12)", borderRadius:8, overflow:"hidden", border:"1px solid rgba(255,255,255,0.2)" }}>
             {[["diy","Doe-het-zelf"],["contractor","Aannemer"]].map(([v,label]) => (
               <button key={v} onClick={() => { setType(v); setCalcResult(null); }} style={{ padding:"7px 14px", border:"none", background: type===v ? "rgba(255,255,255,0.25)" : "transparent", color:"white", fontSize:12, fontWeight: type===v ? 700 : 400, cursor:"pointer" }}>
@@ -216,22 +197,14 @@ export default function App() {
             📂 CSV
           </button>
           <input ref={fileRef} type="file" accept=".csv" style={{ display:"none" }} onChange={handleCSV} />
-          <button
-            onClick={downloadPDF}
-            disabled={!selectedCodes.length || pdfLoading}
-            style={{ background: selectedCodes.length ? "#95D5B2" : "#555", border:"none", color: selectedCodes.length ? "#0d2e1f" : "#999", padding:"7px 18px", borderRadius:8, cursor: selectedCodes.length ? "pointer" : "not-allowed", fontSize:12, fontWeight:800 }}
-          >
+          <button onClick={downloadPDF} disabled={!selectedCodes.length || pdfLoading} style={{ background: selectedCodes.length ? "#95D5B2" : "#555", border:"none", color: selectedCodes.length ? "#0d2e1f" : "#999", padding:"7px 18px", borderRadius:8, cursor: selectedCodes.length ? "pointer" : "not-allowed", fontSize:12, fontWeight:800 }}>
             {pdfLoading ? "Bezig…" : "📄 PDF"}
           </button>
         </div>
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"1fr 340px", minHeight:"calc(100vh - 60px)" }}>
-
-        {/* ── LEFT PANEL ── */}
         <div style={{ padding:"20px 24px", overflow:"auto" }}>
-
-          {/* klantgegevens */}
           <div style={{ background:"white", borderRadius:12, padding:"16px 20px", marginBottom:16, boxShadow:"0 1px 4px rgba(0,0,0,0.07)", display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
             <div>
               <label style={{ fontSize:10, color:"#888", textTransform:"uppercase", letterSpacing:"0.08em", display:"block", marginBottom:4 }}>Naam klant</label>
@@ -243,7 +216,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* tabs */}
           <div style={{ display:"flex", gap:4, marginBottom:16 }}>
             {[["catalog", `📋 Catalogus (${measures.length})`], ["results", `📊 Resultaat${calcResult ? ` · €${totalCost?.toLocaleString("nl-NL",{minimumFractionDigits:2})}` : ""}`]].map(([t, label]) => (
               <button key={t} onClick={() => setActiveTab(t)} style={{ padding:"8px 18px", borderRadius:8, border:"none", cursor:"pointer", fontWeight:600, fontSize:12, background: activeTab===t ? "#1B4D3E" : "white", color: activeTab===t ? "white" : "#555", boxShadow: activeTab===t ? "0 2px 8px rgba(27,77,62,0.3)" : "0 1px 3px rgba(0,0,0,0.08)" }}>
@@ -252,12 +224,9 @@ export default function App() {
             ))}
           </div>
 
-          {/* ── CATALOG TAB ── */}
           {activeTab === "catalog" && (
             <>
-              <input value={zoek} onChange={e => setZoek(e.target.value)} placeholder="🔍 Zoek op naam, code, categorie…"
-                style={{ width:"100%", padding:"10px 16px", border:"1.5px solid #dde", borderRadius:10, fontSize:13, marginBottom:16, outline:"none", background:"white", boxSizing:"border-box" }} />
-
+              <input value={zoek} onChange={e => setZoek(e.target.value)} placeholder="🔍 Zoek op naam, code, categorie…" style={{ width:"100%", padding:"10px 16px", border:"1.5px solid #dde", borderRadius:10, fontSize:13, marginBottom:16, outline:"none", background:"white", boxSizing:"border-box" }} />
               {Object.entries(grouped).map(([cat, items]) => (
                 <div key={cat} style={{ marginBottom:18 }}>
                   <div style={{ fontSize:10, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.12em", color: catColor(cat), marginBottom:8, paddingLeft:4, display:"flex", alignItems:"center", gap:8 }}>
@@ -272,11 +241,9 @@ export default function App() {
                       const unitCost = type === "diy" ? cost?.diyValuePerUnit : cost?.contractorValuePerUnit;
                       return (
                         <div key={m.id} onClick={() => toggle(m.id)} style={{ background: isSelected ? "#eef8f2" : "white", border: isSelected ? `2px solid ${catColor(cat)}` : "1.5px solid #e8eae8", borderRadius:10, padding:"10px 14px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, transition:"all 0.12s" }}>
-                          {/* checkbox */}
                           <div style={{ width:20, height:20, borderRadius:5, border: isSelected ? `2px solid ${catColor(cat)}` : "2px solid #ccc", background: isSelected ? catColor(cat) : "white", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:11, color:"white", fontWeight:800 }}>
                             {isSelected ? "✓" : ""}
                           </div>
-                          {/* info */}
                           <div style={{ flex:1, minWidth:0 }}>
                             <div style={{ fontWeight:600, fontSize:13, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{attrs.name}</div>
                             <div style={{ fontSize:10, color:"#999", marginTop:2, display:"flex", gap:10 }}>
@@ -287,11 +254,9 @@ export default function App() {
                               {unitCost != null && <span style={{ color:"#555" }}>€{unitCost}/{attrs.unit}</span>}
                             </div>
                           </div>
-                          {/* qty input */}
                           {isSelected && (
                             <div onClick={e => e.stopPropagation()} style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
-                              <input type="number" min="0" value={selected[m.id] ?? ""} onChange={e => setQty(m.id, e.target.value)}
-                                style={{ width:65, padding:"5px 8px", border:`1.5px solid ${catColor(cat)}`, borderRadius:6, fontSize:13, textAlign:"right", outline:"none" }} />
+                              <input type="number" min="0" value={selected[m.id] ?? ""} onChange={e => setQty(m.id, e.target.value)} style={{ width:65, padding:"5px 8px", border:`1.5px solid ${catColor(cat)}`, borderRadius:6, fontSize:13, textAlign:"right", outline:"none" }} />
                               <span style={{ fontSize:10, color:"#888", width:24 }}>{attrs.unit}</span>
                             </div>
                           )}
@@ -303,8 +268,6 @@ export default function App() {
               ))}
             </>
           )}
-
-          {/* ── RESULTS TAB ── */}
           {activeTab === "results" && (
             <>
               {!calcResult && !calcLoading && (
@@ -355,11 +318,8 @@ export default function App() {
           )}
         </div>
 
-        {/* ── RIGHT SIDEBAR ── */}
         <div style={{ background:"white", borderLeft:"1px solid #e0e8e0", padding:20, display:"flex", flexDirection:"column", gap:14 }}>
           <div style={{ fontSize:10, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.12em", color:"#2D6A4F" }}>Overzicht</div>
-
-          {/* totaal box */}
           <div style={{ background:"linear-gradient(135deg,#0d2e1f,#1B4D3E)", color:"white", borderRadius:12, padding:"18px 20px" }}>
             <div style={{ fontSize:10, opacity:0.7, marginBottom:4 }}>
               {calcResult ? "Berekend subsidiebedrag" : "Geselecteerde maatregelen"}
@@ -376,11 +336,51 @@ export default function App() {
             </div>
           </div>
 
-          {/* selected list */}
           {selectedMeasures.length > 0 && (
             <div style={{ flex:1, overflow:"auto", display:"flex", flexDirection:"column", gap:6 }}>
               {selectedMeasures.map(m => {
                 const catName = m.attributes.category?.attributes?.name || "Overig";
                 const resultRow = calcResult?.data?.find(r => r.id === m.id);
                 return (
-                  <d
+                  <div key={m.id} style={{ padding:"8px 12px", borderRadius:8, background:"#f4f9f5", borderLeft:`3px solid ${catColor(catName)}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:12, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{m.attributes.name}</div>
+                      <div style={{ fontSize:10, color:"#aaa" }}>{m.id} · {selected[m.id]} {m.attributes.unit}</div>
+                    </div>
+                    {resultRow && (
+                      <div style={{ fontSize:13, fontWeight:700, color:"#1B4D3E", marginLeft:8, flexShrink:0 }}>
+                        €{resultRow.attributes.totalForQuantity?.toFixed(0)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {selectedCodes.length === 0 && (
+            <div style={{ color:"#ccc", fontSize:12, textAlign:"center", padding:"20px 0" }}>
+              Selecteer maatregelen uit de catalogus
+            </div>
+          )}
+
+          <div style={{ marginTop:"auto", display:"flex", flexDirection:"column", gap:8 }}>
+            {calcError && <div style={{ fontSize:11, color:"#e74c3c", textAlign:"center" }}>{calcError}</div>}
+            <button onClick={calculate} disabled={!selectedCodes.length || calcLoading} style={{ background: selectedCodes.length ? "#2D6A4F" : "#ddd", color: selectedCodes.length ? "white" : "#aaa", border:"none", borderRadius:10, padding:"13px", fontWeight:700, fontSize:14, cursor: selectedCodes.length ? "pointer" : "not-allowed", width:"100%" }}>
+              {calcLoading ? "Berekenen…" : `🧮 Bereken subsidie (${selectedCodes.length})`}
+            </button>
+            <button onClick={downloadPDF} disabled={!selectedCodes.length || pdfLoading} style={{ background: selectedCodes.length ? "#0d2e1f" : "#ddd", color: selectedCodes.length ? "white" : "#aaa", border:"none", borderRadius:10, padding:"13px", fontWeight:700, fontSize:14, cursor: selectedCodes.length ? "pointer" : "not-allowed", width:"100%" }}>
+              {pdfLoading ? "PDF maken…" : "📄 PDF downloaden (API)"}
+            </button>
+            <div style={{ background:"#fffbf0", borderRadius:8, padding:"12px 14px", border:"1px solid #f0e0a0" }}>
+              <div style={{ fontSize:10, fontWeight:800, color:"#856404", marginBottom:4 }}>ℹ️ Let op</div>
+              <div style={{ fontSize:10, color:"#666", lineHeight:1.6 }}>
+                Bedragen zijn indicatief op basis van de Nij Begun Maatregelcatalogus. Definitieve subsidie wordt vastgesteld door RVO.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
