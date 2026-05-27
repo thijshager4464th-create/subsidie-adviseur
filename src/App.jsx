@@ -107,22 +107,12 @@ export default function App() {
       try {
         const [mRes, subRes] = await Promise.all([
           apiFetch("/measures"),
-          apiFetch("/subcategories/V2-3"),
+          apiFetch("/measures/V2-3-A4"),
         ]);
         const allMeasures = mRes.data || [];
         setMeasures(allMeasures.filter(m => isSchipperMaatregel(m.id)));
-        const subcatMeasures = subRes.data?.attributes?.measures || [];
-        const addCosts = [];
-        subcatMeasures.forEach(m => {
-          if (m.attributes?.additionalCosts) {
-            m.attributes.additionalCosts.forEach(ac => {
-              if (!addCosts.find(x => x.id === ac.id)) {
-                addCosts.push(ac);
-              }
-            });
-          }
-        });
-        setAdditionalCosts(addCosts);
+        const addCosts = subRes.data?.attributes?.additionalCosts || [];
+setAdditionalCosts(addCosts);
       } catch (e) { setApiError(e.message); }
       finally { setLoading(false); }
     })();
