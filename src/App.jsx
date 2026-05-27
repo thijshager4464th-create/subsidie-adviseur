@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 const API = "https://api.nij-begun.project.abl.nu/api/v1";
 
-const SCHIPPER_PREFIXES_30 = ["V2-4", "V4-1-I"];
+const SCHIPPER_PREFIXES_50 = ["V2-1", "V2-2", "V2-3", "V4-3", "V4-4", "V6-1-C", "V6-1-D"];
 const SCHIPPER_PREFIXES_50 = ["V2-3", "V4-3", "V4-4", "V6-1-C", "V6-1-D"];
 
 const is30Regeling = (id) => SCHIPPER_PREFIXES_30.some(p => id.startsWith(p));
