@@ -28,26 +28,33 @@ async function apiPost(path, body) {
   return r.json();
 }
 
-function MaatrgelKaart({ m, isSelected, isDisabled, onToggle, onQtyChange, qty, type, color }) {
+function MaatrgelKaart({ m, isSelected, onToggle, onQtyChange, qty, type, color, isAdditional }) {
   const attrs = m.attributes;
   const cost = attrs.regularCosts?.[0]?.attributes;
-  const unitCost = type === "diy" ? cost?.diyValuePerUnit : cost?.contractorValuePerUnit;
+  const addCost = isAdditional ? attrs : null;
+  const unitCost = isAdditional
+    ? (type === "diy" ? addCost?.diyValuePerUnit : addCost?.contractorValuePerUnit)
+    : (type === "diy" ? cost?.diyValuePerUnit : cost?.contractorValuePerUnit);
+  const unit = isAdditional ? attrs.unit : attrs.unit;
+  const name = isAdditional ? attrs.notes || m.id : attrs.name;
+  const id = m.id;
+
   return (
-    <div onClick={() => !isDisabled && onToggle(m.id)} style={{ background: isDisabled ? "#f7f7f7" : isSelected ? "#eef8f2" : "white", border: isSelected ? `2px solid ${color}` : "1.5px solid #e8eae8", borderRadius: 10, padding: "10px 14px", cursor: isDisabled ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 12, opacity: isDisabled ? 0.35 : 1, transition: "all 0.12s" }}>
+    <div onClick={() => onToggle(id)} style={{ background: isSelected ? "#eef8f2" : "white", border: isSelected ? `2px solid ${color}` : "1.5px solid #e8eae8", borderRadius: 10, padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, transition: "all 0.12s" }}>
       <div style={{ width: 20, height: 20, borderRadius: 5, border: isSelected ? `2px solid ${color}` : "2px solid #ccc", background: isSelected ? color : "white", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, color: "white", fontWeight: 800 }}>
         {isSelected ? "✓" : ""}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{attrs.name}</div>
+        <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
         <div style={{ fontSize: 10, color: "#999", marginTop: 2, display: "flex", gap: 10 }}>
-          <span style={{ fontWeight: 700 }}>{m.id}</span>
-          {unitCost != null && <span>€ {unitCost} / {attrs.unit}</span>}
+          <span style={{ fontWeight: 700 }}>{id}</span>
+          {unitCost != null && <span>€ {unitCost} / {unit}</span>}
         </div>
       </div>
       {isSelected && (
         <div onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-          <input type="number" min="0" value={qty ?? ""} onChange={e => onQtyChange(m.id, e.target.value)} style={{ width: 65, padding: "5px 8px", border: `1.5px solid ${color}`, borderRadius: 6, fontSize: 13, textAlign: "right", outline: "none" }} />
-          <span style={{ fontSize: 10, color: "#888", width: 24 }}>{attrs.unit}</span>
+          <input type="number" min="0" value={qty ?? ""} onChange={e => onQtyChange(id, e.target.value)} style={{ width: 65, padding: "5px 8px", border: `1.5px solid ${color}`, borderRadius: 6, fontSize: 13, textAlign: "right", outline: "none" }} />
+          <span style={{ fontSize: 10, color: "#888", width: 24 }}>{unit}</span>
         </div>
       )}
     </div>
@@ -58,11 +65,9 @@ function printSchipperOverzicht(klant, adres, postcode, pct, catalogus, subsidie
   const rowsHTML = rows.map(r =>
     "<tr><td>" + r.id + "</td><td>" + r.attributes.name + "</td><td style='text-align:right'>" + r.attributes.quantity + " " + r.attributes.unit + "</td><td style='text-align:right'>€ " + r.attributes.totalForQuantity.toFixed(2) + "</td><td style='text-align:right'>€ " + (r.attributes.totalForQuantity * pct / 100).toFixed(2) + "</td></tr>"
   ).join("");
-
   const bovenCatRij = bovenCat > 0
     ? "<tr style='color:#c0392b'><td colspan='4'>Boven catalogusmaximum (eigen rekening, niet subsidiabel)</td><td style='text-align:right'>€ " + bovenCat.toLocaleString("nl-NL", {minimumFractionDigits:2}) + "</td></tr>"
     : "";
-
   const win = window.open("", "_blank");
   win.document.write("<!DOCTYPE html><html lang='nl'><head><meta charset='UTF-8'><title>Subsidieoverzicht</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Segoe UI,sans-serif;padding:40px;font-size:13px;color:#1a1a2e}.header{display:flex;justify-content:space-between;border-bottom:3px solid #1B4D3E;padding-bottom:16px;margin-bottom:24px}.logo{font-size:20px;font-weight:800;color:#1B4D3E}.meta{text-align:right;font-size:12px;color:#555}table{width:100%;border-collapse:collapse;margin-bottom:20px}thead tr{background:#1B4D3E;color:white}th{padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase}tbody tr{border-bottom:1px solid #eee}td{padding:8px 12px}.totaalrij{font-weight:800;font-size:15px}.conform{background:#fffbf0;border:1px solid #f0c040;border-radius:8px;padding:14px;margin-bottom:20px;font-size:11px;color:#7d5a00;line-height:1.7}.disclaimer{font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:14px}@media print{body{padding:20px}}</style></head><body>");
   win.document.write("<div class='header'><div class='logo'>Schipper Kozijnen<br><span style='font-size:11px;font-weight:400;color:#888'>Subsidieoverzicht voor klant</span></div><div class='meta'><strong>" + klant + "</strong><br>" + adres + "<br>" + postcode + "<br>Datum: " + datum + "</div></div>");
@@ -74,8 +79,10 @@ function printSchipperOverzicht(klant, adres, postcode, pct, catalogus, subsidie
   win.document.close();
   setTimeout(() => win.print(), 500);
 }
+
 export default function App() {
   const [measures, setMeasures] = useState([]);
+  const [additionalCosts, setAdditionalCosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
   const [klant, setKlant] = useState("");
@@ -85,6 +92,7 @@ export default function App() {
   const [regeling, setRegeling] = useState(null);
   const [selected30, setSelected30] = useState({});
   const [selected50, setSelected50] = useState({});
+  const [selectedAdditional, setSelectedAdditional] = useState({});
   const [activeTab, setActiveTab] = useState("invoer");
   const [schipperOfferte30, setSchipperOfferte30] = useState("");
   const [schipperOfferte50, setSchipperOfferte50] = useState("");
@@ -97,18 +105,34 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiFetch("/measures");
-        setMeasures((res.data || []).filter(m => isSchipperMaatregel(m.id)));
+        const [mRes, subRes] = await Promise.all([
+          apiFetch("/measures"),
+          apiFetch("/subcategories/V2-3"),
+        ]);
+        const allMeasures = mRes.data || [];
+        setMeasures(allMeasures.filter(m => isSchipperMaatregel(m.id)));
+        const subcatMeasures = subRes.data?.attributes?.measures || [];
+        const addCosts = [];
+        subcatMeasures.forEach(m => {
+          if (m.attributes?.additionalCosts) {
+            m.attributes.additionalCosts.forEach(ac => {
+              if (!addCosts.find(x => x.id === ac.id)) {
+                addCosts.push(ac);
+              }
+            });
+          }
+        });
+        setAdditionalCosts(addCosts);
       } catch (e) { setApiError(e.message); }
       finally { setLoading(false); }
     })();
   }, []);
-
   const measures30 = measures.filter(m => is30Regeling(m.id));
   const measures50 = measures.filter(m => is50Regeling(m.id));
   const selected30Codes = Object.keys(selected30);
   const selected50Codes = Object.keys(selected50);
-  const totalSelected = selected30Codes.length + selected50Codes.length;
+  const selectedAdditionalCodes = Object.keys(selectedAdditional);
+  const totalSelected = selected30Codes.length + selected50Codes.length + selectedAdditionalCodes.length;
 
   const grouped30 = {};
   measures30.forEach(m => {
@@ -125,8 +149,10 @@ export default function App() {
 
   const toggle30 = (code) => { setSelected30(prev => { const next = { ...prev }; if (next[code] !== undefined) delete next[code]; else next[code] = 1; return next; }); setCalcResult30(null); };
   const toggle50 = (code) => { setSelected50(prev => { const next = { ...prev }; if (next[code] !== undefined) delete next[code]; else next[code] = 1; return next; }); setCalcResult50(null); };
+  const toggleAdditional = (code) => { setSelectedAdditional(prev => { const next = { ...prev }; if (next[code] !== undefined) delete next[code]; else next[code] = 1; return next; }); setCalcResult50(null); };
   const setQty30 = (code, val) => setSelected30(prev => ({ ...prev, [code]: Math.max(0, Number(val)) }));
   const setQty50 = (code, val) => setSelected50(prev => ({ ...prev, [code]: Math.max(0, Number(val)) }));
+  const setQtyAdditional = (code, val) => setSelectedAdditional(prev => ({ ...prev, [code]: Math.max(0, Number(val)) }));
 
   const calculate = async () => {
     setCalcLoading(true); setCalcError(null); setCalcResult30(null); setCalcResult50(null);
@@ -134,7 +160,8 @@ export default function App() {
       const p = [];
       if (selected30Codes.length > 0) p.push(apiPost("/measures/subsidies", { type, measures: selected30Codes.map(c => ({ code: c, quantity: selected30[c] || 0 })) }));
       else p.push(Promise.resolve(null));
-      if (selected50Codes.length > 0) p.push(apiPost("/measures/subsidies", { type, measures: selected50Codes.map(c => ({ code: c, quantity: selected50[c] || 0 })) }));
+      const all50 = [...selected50Codes.map(c => ({ code: c, quantity: selected50[c] || 0 })), ...selectedAdditionalCodes.map(c => ({ code: c, quantity: selectedAdditional[c] || 0 }))];
+      if (all50.length > 0) p.push(apiPost("/measures/subsidies", { type, measures: all50 }));
       else p.push(Promise.resolve(null));
       const [r30, r50] = await Promise.all(p);
       setCalcResult30(r30); setCalcResult50(r50); setActiveTab("resultaat");
@@ -209,7 +236,6 @@ export default function App() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", minHeight: "calc(100vh - 56px)" }}>
         <div style={{ padding: "20px 24px", overflow: "auto" }}>
-
           <div style={{ background: "white", borderRadius: 12, padding: "16px 20px", marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
             <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#1B4D3E", marginBottom: 12 }}>Klantgegevens</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 130px", gap: 12 }}>
@@ -232,6 +258,7 @@ export default function App() {
 
           {activeTab === "invoer" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
               <div style={{ background: "white", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
                 <div style={{ background: "linear-gradient(135deg,#7d5a00,#c49a00)", color: "white", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
@@ -245,7 +272,7 @@ export default function App() {
                     <div key={sub}>
                       <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#c49a00", marginBottom: 8 }}>{sub}</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                        {items.map(m => <MaatrgelKaart key={m.id} m={m} isSelected={selected30[m.id] !== undefined} isDisabled={false} onToggle={toggle30} onQtyChange={setQty30} qty={selected30[m.id]} type={type} color="#c49a00" />)}
+                        {items.map(m => <MaatrgelKaart key={m.id} m={m} isSelected={selected30[m.id] !== undefined} onToggle={toggle30} onQtyChange={setQty30} qty={selected30[m.id]} type={type} color="#c49a00" isAdditional={false} />)}
                       </div>
                     </div>
                   ))}
@@ -258,7 +285,7 @@ export default function App() {
                     <div style={{ fontWeight: 800, fontSize: 15 }}>🪟 50% / 100% Regeling — HR++ glas</div>
                     <div style={{ fontSize: 11, opacity: 0.8, marginTop: 2 }}>HR++ glas · kierdichting · dakramen · bijkomende kosten</div>
                   </div>
-                  <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 8, padding: "4px 12px", fontSize: 12, fontWeight: 700 }}>{selected50Codes.length} geselecteerd</div>
+                  <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 8, padding: "4px 12px", fontSize: 12, fontWeight: 700 }}>{selected50Codes.length + selectedAdditionalCodes.length} geselecteerd</div>
                 </div>
                 <div style={{ padding: "14px 20px 0", display: "flex", gap: 8 }}>
                   {[["50", "50% regeling"], ["100", "100% regeling"]].map(([v, label]) => (
@@ -270,10 +297,21 @@ export default function App() {
                     <div key={sub}>
                       <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2D6A4F", marginBottom: 8 }}>{sub}</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                        {items.map(m => <MaatrgelKaart key={m.id} m={m} isSelected={selected50[m.id] !== undefined} isDisabled={false} onToggle={toggle50} onQtyChange={setQty50} qty={selected50[m.id]} type={type} color="#2D6A4F" />)}
+                        {items.map(m => <MaatrgelKaart key={m.id} m={m} isSelected={selected50[m.id] !== undefined} onToggle={toggle50} onQtyChange={setQty50} qty={selected50[m.id]} type={type} color="#2D6A4F" isAdditional={false} />)}
                       </div>
                     </div>
                   ))}
+
+                  {additionalCosts.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2D6A4F", marginBottom: 8, borderTop: "1px solid #eee", paddingTop: 12 }}>Bijkomende kosten (V2-3-X)</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                        {additionalCosts.map(ac => (
+                          <MaatrgelKaart key={ac.id} m={ac} isSelected={selectedAdditional[ac.id] !== undefined} onToggle={toggleAdditional} onQtyChange={setQtyAdditional} qty={selectedAdditional[ac.id]} type={type} color="#2D6A4F" isAdditional={true} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -294,25 +332,17 @@ export default function App() {
                     </div>
                     {schipperOfferte30 && totaal30Catalogus && (
                       <div style={{ marginTop: 14, padding: "12px 16px", background: "#fffbf0", borderRadius: 10, border: "1px solid #f0c040" }}>
-                        <div style={{ fontSize: 12, color: "#7d5a00", display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span>Cataloguswaarde</span><span>€ {totaal30Catalogus.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: "#7d5a00", display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span>Subsidie (30%)</span><span>€ {totaal30Subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: "#7d5a00", display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span>Boven catalogus</span><span>€ {Math.max(0, parseFloat(schipperOfferte30) - totaal30Catalogus).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: "#c0392b", display: "flex", justifyContent: "space-between", borderTop: "1px solid #f0c040", paddingTop: 8, marginTop: 4 }}>
-                          <span>Eigen bijdrage klant</span><span>€ {Math.max(0, parseFloat(schipperOfferte30) - (totaal30Catalogus * 0.30)).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
-                        </div>
+                        <div style={{ fontSize: 12, color: "#7d5a00", display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Cataloguswaarde</span><span>€ {totaal30Catalogus.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                        <div style={{ fontSize: 12, color: "#7d5a00", display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Subsidie (30%)</span><span>€ {totaal30Subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                        <div style={{ fontSize: 12, color: "#7d5a00", display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Boven catalogus</span><span>€ {Math.max(0, parseFloat(schipperOfferte30) - totaal30Catalogus).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: "#c0392b", display: "flex", justifyContent: "space-between", borderTop: "1px solid #f0c040", paddingTop: 8, marginTop: 4 }}><span>Eigen bijdrage klant</span><span>€ {Math.max(0, parseFloat(schipperOfferte30) - (totaal30Catalogus * 0.30)).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {selected50Codes.length > 0 && (
+              {(selected50Codes.length > 0 || selectedAdditionalCodes.length > 0) && (
                 <div style={{ background: "white", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
                   <div style={{ background: "linear-gradient(135deg,#1B4D3E,#2D6A4F)", color: "white", padding: "14px 20px" }}>
                     <div style={{ fontWeight: 800, fontSize: 15 }}>🪟 {regeling === "100" ? "100%" : "50%"} Regeling — Schipper offertebedrag</div>
@@ -326,25 +356,17 @@ export default function App() {
                     </div>
                     {schipperOfferte50 && totaal50Catalogus && (
                       <div style={{ marginTop: 14, padding: "12px 16px", background: "#f0f8f4", borderRadius: 10, border: "1px solid #2D6A4F" }}>
-                        <div style={{ fontSize: 12, color: "#1B4D3E", display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span>Cataloguswaarde</span><span>€ {totaal50Catalogus.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: "#1B4D3E", display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span>Subsidie ({regeling === "100" ? "100" : "50"}%)</span><span>€ {totaal50Subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: "#1B4D3E", display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span>Boven catalogus</span><span>€ {Math.max(0, parseFloat(schipperOfferte50) - totaal50Catalogus).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: "#c0392b", display: "flex", justifyContent: "space-between", borderTop: "1px solid #2D6A4F", paddingTop: 8, marginTop: 4 }}>
-                          <span>Eigen bijdrage klant</span><span>€ {Math.max(0, parseFloat(schipperOfferte50) - (totaal50Catalogus * totaal50Pct)).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
-                        </div>
+                        <div style={{ fontSize: 12, color: "#1B4D3E", display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Cataloguswaarde</span><span>€ {totaal50Catalogus.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                        <div style={{ fontSize: 12, color: "#1B4D3E", display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Subsidie ({regeling === "100" ? "100" : "50"}%)</span><span>€ {totaal50Subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                        <div style={{ fontSize: 12, color: "#1B4D3E", display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span>Boven catalogus</span><span>€ {Math.max(0, parseFloat(schipperOfferte50) - totaal50Catalogus).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: "#c0392b", display: "flex", justifyContent: "space-between", borderTop: "1px solid #2D6A4F", paddingTop: 8, marginTop: 4 }}><span>Eigen bijdrage klant</span><span>€ {Math.max(0, parseFloat(schipperOfferte50) - (totaal50Catalogus * totaal50Pct)).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {selected30Codes.length === 0 && selected50Codes.length === 0 && (
+              {selected30Codes.length === 0 && selected50Codes.length === 0 && selectedAdditionalCodes.length === 0 && (
                 <div style={{ textAlign: "center", padding: "60px 20px", color: "#bbb" }}>
                   <div style={{ fontSize: 48, marginBottom: 12 }}>💶</div>
                   <div style={{ fontSize: 14 }}>Selecteer eerst maatregelen in de <strong style={{ color: "#1B4D3E" }}>Maatregelen tab</strong></div>
@@ -479,17 +501,20 @@ export default function App() {
           </div>
           <div style={{ borderRadius: 10, padding: "12px 14px", background: "#eef8f2", border: "1.5px solid #2D6A4F" }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: "#1B4D3E", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>🪟 {regeling === "100" ? "100%" : regeling === "50" ? "50%" : "50%/100%"} HR++ glas</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4D3E" }}>{totaal50Subsidie != null ? `€ ${totaal50Subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}` : `${selected50Codes.length} maatregelen`}</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4D3E" }}>{totaal50Subsidie != null ? `€ ${totaal50Subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}` : `${selected50Codes.length + selectedAdditionalCodes.length} maatregelen`}</div>
             {totaal50Catalogus != null && <div style={{ fontSize: 10, color: "#2D6A4F", marginTop: 2 }}>Catalogus: € {totaal50Catalogus.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</div>}
           </div>
           <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
-            {!regeling && selected50Codes.length > 0 && (
+            {!regeling && (selected50Codes.length > 0 || selectedAdditionalCodes.length > 0) && (
               <div style={{ fontSize: 11, color: "#e67e22", background: "#fff8f0", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
                 ⚠️ Kies 50% of 100% regeling
               </div>
             )}
             {calcError && <div style={{ fontSize: 11, color: "#e74c3c", textAlign: "center" }}>{calcError}</div>}
-            <button onClick={calculate} disabled={totalSelected === 0 || calcLoading || (selected50Codes.length > 0 && !regeling)} style={{ background: totalSelected > 0 && (selected50Codes.length === 0 || regeling) ? "#1B4D3E" : "#ddd", color: totalSelected > 0 && (selected50Codes.length === 0 || regeling) ? "white" : "#aaa", border: "none", borderRadius: 10, padding: "13px", fontWeight: 700, fontSize: 14, cursor: totalSelected > 0 ? "pointer" : "not-allowed", width: "100%" }}>
+            <button
+              onClick={calculate}
+              disabled={totalSelected === 0 || calcLoading || ((selected50Codes.length > 0 || selectedAdditionalCodes.length > 0) && !regeling)}
+              style={{ background: totalSelected > 0 && (selected50Codes.length === 0 || regeling) ? "#1B4D3E" : "#ddd", color: totalSelected > 0 && (selected50Codes.length === 0 || regeling) ? "white" : "#aaa", border: "none", borderRadius: 10, padding: "13px", fontWeight: 700, fontSize: 14, cursor: totalSelected > 0 ? "pointer" : "not-allowed", width: "100%" }}>
               {calcLoading ? "Berekenen…" : `🧮 Bereken subsidie (${totalSelected})`}
             </button>
             <div style={{ background: "#fffbf0", borderRadius: 8, padding: "10px 12px", border: "1px solid #f0e0a0" }}>
