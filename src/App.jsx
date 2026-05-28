@@ -554,7 +554,7 @@ setAdditionalCosts(addCosts);
               onClick={calculate}
               disabled={totalSelected === 0 || calcLoading || ((selected50Codes.length > 0 || selectedAdditionalCodes.length > 0) && !regeling)}
               style={{ background: totalSelected > 0 && (selected50Codes.length === 0 || regeling) ? "#1B4D3E" : "#ddd", color: totalSelected > 0 && (selected50Codes.length === 0 || regeling) ? "white" : "#aaa", border: "none", borderRadius: 10, padding: "13px", fontWeight: 700, fontSize: 14, cursor: totalSelected > 0 ? "pointer" : "not-allowed", width: "100%" }}>
-              {calcLoading ? "Berekenen…" : `🧮 Bereken subsidie (${totalSelected})`}
+              {calcLoading ? "Berekenen..." : "Bereken subsidie (" + totalSelected + ")"}
             </button>
             <div style={{ background: "#fffbf0", borderRadius: 8, padding: "10px 12px", border: "1px solid #f0e0a0" }}>
               <div style={{ fontSize: 10, fontWeight: 800, color: "#856404", marginBottom: 3 }}>ℹ️ Let op</div>
