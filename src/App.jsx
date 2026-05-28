@@ -517,3 +517,52 @@ setAdditionalCosts(addCosts);
     </div>
   );
 }
+<div style={{ background: "white", borderLeft: "1px solid #e0e8e0", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em", color: "#1B4D3E" }}>Samenvatting</div>
+          {(klant || postcode) && (
+            <div style={{ background: "#f4f9f5", borderRadius: 10, padding: "12px 14px", borderLeft: "3px solid #2D6A4F" }}>
+              {klant && <div style={{ fontWeight: 700, fontSize: 13 }}>{klant}</div>}
+              {adres && <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{adres}</div>}
+              {postcode && <div style={{ fontSize: 11, color: "#888" }}>📍 {postcode}</div>}
+            </div>
+          )}
+          <div style={{ borderRadius: 10, padding: "12px 14px", background: "#fffbf0", border: "1.5px solid #f0c040" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#7d5a00", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>🪟 30% Triple glas</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#7d5a00" }}>{totaal30Subsidie != null ? `€ ${totaal30Subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}` : `${selected30Codes.length} maatregelen`}</div>
+            {totaal30Catalogus != null && <div style={{ fontSize: 10, color: "#9a7000", marginTop: 2 }}>Catalogus: € {totaal30Catalogus.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</div>}
+          </div>
+          <div style={{ borderRadius: 10, padding: "12px 14px", background: "#eef8f2", border: "1.5px solid #2D6A4F" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#1B4D3E", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>🪟 {regeling === "100" ? "100%" : regeling === "50" ? "50%" : "50%/100%"} HR++ glas</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4D3E" }}>
+              {totaal50Subsidie != null ? `€ ${totaal50Subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}` : `${selected50Codes.length + selectedAdditionalCodes.length} maatregelen`}
+            </div>
+            {totaal50Catalogus != null && (
+              <div style={{ fontSize: 10, color: "#2D6A4F", marginTop: 2 }}>
+                Catalogus: € {((totaal50Catalogus || 0) + additionalTotaal).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}
+                {additionalTotaal > 0 && <span style={{ opacity: 0.7 }}> (incl. bijkomend)</span>}
+              </div>
+            )}
+          </div>
+          <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+            {!regeling && (selected50Codes.length > 0 || selectedAdditionalCodes.length > 0) && (
+              <div style={{ fontSize: 11, color: "#e67e22", background: "#fff8f0", padding: "8px 10px", borderRadius: 8, textAlign: "center" }}>
+                ⚠️ Kies 50% of 100% regeling
+              </div>
+            )}
+            {calcError && <div style={{ fontSize: 11, color: "#e74c3c", textAlign: "center" }}>{calcError}</div>}
+            <button
+              onClick={calculate}
+              disabled={totalSelected === 0 || calcLoading || ((selected50Codes.length > 0 || selectedAdditionalCodes.length > 0) && !regeling)}
+              style={{ background: totalSelected > 0 && (selected50Codes.length === 0 || regeling) ? "#1B4D3E" : "#ddd", color: totalSelected > 0 && (selected50Codes.length === 0 || regeling) ? "white" : "#aaa", border: "none", borderRadius: 10, padding: "13px", fontWeight: 700, fontSize: 14, cursor: totalSelected > 0 ? "pointer" : "not-allowed", width: "100%" }}>
+              {calcLoading ? "Berekenen…" : `🧮 Bereken subsidie (${totalSelected})`}
+            </button>
+            <div style={{ background: "#fffbf0", borderRadius: 8, padding: "10px 12px", border: "1px solid #f0e0a0" }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: "#856404", marginBottom: 3 }}>ℹ️ Let op</div>
+              <div style={{ fontSize: 10, color: "#666", lineHeight: 1.6 }}>Indicatieve berekening. Definitieve subsidie vastgesteld door SNN.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
