@@ -7,7 +7,6 @@ const RED = "#E31E24";
 const DARKRED = "#B01419";
 const GOLD = "#c49a00";
 const DARKGOLD = "#7d5a00";
-const GREEN = "#1B4D3E";
 
 const is30 = (id) => PREFIXES_30.some(p => id.startsWith(p));
 const is50 = (id) => PREFIXES_50.some(p => id.startsWith(p));
@@ -60,7 +59,7 @@ function printPDF(klant, adres, postcode, projNr, pct, cat, addTotaal, subsidie,
   const aHTML = addRows.map(r => "<tr style='background:#fafafa'><td>" + r.id + "</td><td>" + r.name + "</td><td style='text-align:right'>" + r.qty + " " + r.unit + "</td><td style='text-align:right'>€ " + r.subtotaal.toFixed(2) + "</td><td style='text-align:right'>€ " + (r.subtotaal * pct / 100).toFixed(2) + "</td></tr>").join("");
   const bHTML = bovenCat > 0 ? "<tr style='color:#c0392b;background:#fff5f5'><td colspan='4'><strong>Boven catalogusmaximum (eigen rekening, niet subsidiabel)</strong></td><td style='text-align:right'>€ " + bovenCat.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" : "";
   const win = window.open("", "_blank");
-  win.document.write("<!DOCTYPE html><html lang='nl'><head><meta charset='UTF-8'><title>Subsidieoverzicht - " + klant + "</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Segoe UI,sans-serif;padding:40px;font-size:13px;color:#1a1a2e}.header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #E31E24;padding-bottom:16px;margin-bottom:24px}.logo{height:48px}.meta{text-align:right;font-size:12px;color:#555}.projnr{display:inline-block;background:#E31E24;color:white;padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:20px}thead tr{background:#E31E24;color:white}th{padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase}tbody tr{border-bottom:1px solid #eee}td{padding:8px 12px}.totaal{font-weight:800;font-size:15px;background:#fff0f0}.conform{background:#fff0f0;border:2px solid #E31E24;border-radius:8px;padding:16px;margin-bottom:20px;font-size:12px;color:#8B0000;line-height:1.8;font-weight:500}.waarschuwing{background:#fff8f0;border:2px solid #f0a000;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;color:#7d4000;line-height:1.8;font-weight:600}.disc{font-size:11px;color:#888;border-top:1px solid #eee;padding-top:14px;line-height:1.6}@media print{body{padding:20px}}</style></head><body>");
+  win.document.write("<!DOCTYPE html><html lang='nl'><head><meta charset='UTF-8'><title>Subsidieoverzicht - " + klant + "</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Segoe UI,sans-serif;padding:40px;font-size:13px;color:#1a1a2e}.header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #E31E24;padding-bottom:16px;margin-bottom:24px}.logo{height:48px}.meta{text-align:right;font-size:12px;color:#555}.projnr{display:inline-block;background:#E31E24;color:white;padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:20px}thead tr{background:#E31E24;color:white}th{padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase}tbody tr{border-bottom:1px solid #eee}td{padding:8px 12px}.totaal{font-weight:800;font-size:15px;background:#fff0f0}.waarschuwing{background:#fff8f0;border:2px solid #f0a000;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;color:#7d4000;line-height:1.8;font-weight:600}.conform{background:#fff0f0;border:2px solid #E31E24;border-radius:8px;padding:16px;margin-bottom:20px;font-size:12px;color:#8B0000;line-height:1.8}.disc{font-size:11px;color:#888;border-top:1px solid #eee;padding-top:14px}@media print{body{padding:20px}}</style></head><body>");
   win.document.write("<div class='header'><img src='https://subsidie-adviseur.vercel.app/images.png' class='logo' alt='Schipper Kozijnen' /><div class='meta'>" + (projNr ? "<span class='projnr'>Project: " + projNr + "</span><br>" : "") + "<strong>" + klant + "</strong><br>" + adres + "<br>" + postcode + "<br>Datum: " + datum + "</div></div>");
   win.document.write("<table><thead><tr><th>Code</th><th>Maatregel</th><th style='text-align:right'>Hoev.</th><th style='text-align:right'>Catalogus</th><th style='text-align:right'>Subsidie " + pct + "%</th></tr></thead><tbody>" + rHTML + (aHTML ? "<tr><td colspan='5' style='font-weight:700;padding-top:10px;color:#E31E24;background:#fff5f5'>Bijkomende kosten</td></tr>" + aHTML : "") + "</tbody></table>");
   win.document.write("<table><tbody><tr><td>Cataloguswaarde maatregelen</td><td style='text-align:right'>€ " + cat.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" + (addTotaal > 0 ? "<tr><td>Bijkomende kosten</td><td style='text-align:right'>€ " + addTotaal.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" : "") + "<tr><td><strong>Subsidie (" + pct + "%)</strong></td><td style='text-align:right'><strong>€ " + subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</strong></td></tr><tr><td>Schipper Kozijnen offerte totaal</td><td style='text-align:right'>€ " + offerte.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" + bHTML + "<tr class='totaal'><td><strong>Eigen bijdrage klant totaal</strong></td><td style='text-align:right;color:#c0392b'><strong>€ " + eigenBijdrage.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</strong></td></tr></tbody></table>");
@@ -205,10 +204,11 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f7f7f7", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#1a1a2e" }}>
-
       <div style={{ background: "linear-gradient(135deg," + DARKRED + "," + RED + ")", color: "white", padding: "12px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 4px 20px rgba(227,30,36,0.3)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <img src="/images.png" alt="Schipper Kozijnen" style={{ height: 40, filter: "brightness(0) invert(1)" }} />
+          <div style={{ background: "white", borderRadius: 6, padding: "3px 8px", display: "flex", alignItems: "center" }}>
+            <img src="/images.png" alt="Schipper Kozijnen" style={{ height: 36 }} />
+          </div>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-0.3px" }}>Subsidieadviseur</div>
             <div style={{ fontSize: 10, opacity: 0.75, marginTop: 1 }}>{measures.length + " maatregelen geladen via Nij Begun API"}</div>
@@ -223,7 +223,6 @@ export default function App() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", minHeight: "calc(100vh - 64px)" }}>
         <div style={{ padding: "20px 24px", overflow: "auto" }}>
-
           <div style={{ background: "white", borderRadius: 12, padding: "16px 20px", marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.07)", borderTop: "3px solid " + RED }}>
             <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: RED, marginBottom: 12 }}>Klantgegevens</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 130px 130px", gap: 12 }}>
@@ -246,7 +245,6 @@ export default function App() {
 
           {tab === "invoer" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
               <div style={{ background: "white", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
                 <div style={{ background: "linear-gradient(135deg," + DARKGOLD + "," + GOLD + ")", color: "white", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
@@ -509,10 +507,9 @@ export default function App() {
         </div>
         <div style={{ background: "white", borderLeft: "1px solid #eee", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 4 }}>
-            <img src="/images.png" alt="Schipper Kozijnen" style={{ height: 32 }} />
+            <img src="/images.png" alt="Schipper Kozijnen" style={{ height: 36 }} />
           </div>
           <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em", color: RED }}>Samenvatting</div>
-
           {(klant || postcode || projNr) && (
             <div style={{ background: "#fff5f5", borderRadius: 10, padding: "12px 14px", borderLeft: "3px solid " + RED }}>
               {projNr && <div style={{ fontSize: 10, fontWeight: 700, color: RED, marginBottom: 4, textTransform: "uppercase" }}>{"Project: " + projNr}</div>}
@@ -521,7 +518,6 @@ export default function App() {
               {postcode && <div style={{ fontSize: 11, color: "#888" }}>{"Postcode: " + postcode}</div>}
             </div>
           )}
-
           <div style={{ borderRadius: 10, padding: "12px 14px", background: "#fffbf0", border: "1.5px solid " + GOLD }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: DARKGOLD, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>30% Triple glas</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: DARKGOLD }}>
@@ -529,7 +525,6 @@ export default function App() {
             </div>
             {cat30 != null && <div style={{ fontSize: 10, color: DARKGOLD, marginTop: 2, opacity: 0.8 }}>{"Catalogus: € " + cat30.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</div>}
           </div>
-
           <div style={{ borderRadius: 10, padding: "12px 14px", background: "#fff5f5", border: "1.5px solid " + RED }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: DARKRED, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>
               {(regeling === "100" ? "100%" : regeling === "50" ? "50%" : "50%/100%") + " HR++ glas"}
@@ -544,7 +539,6 @@ export default function App() {
               </div>
             )}
           </div>
-
           <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
             {!regeling && (codes50.length > 0 || codesAdd.length > 0) && (
               <div style={{ fontSize: 11, color: DARKRED, background: "#fff5f5", padding: "8px 10px", borderRadius: 8, textAlign: "center", border: "1px solid " + RED }}>
@@ -555,18 +549,9 @@ export default function App() {
             <button
               onClick={calculate}
               disabled={totalSel === 0 || calcLoading || ((codes50.length > 0 || codesAdd.length > 0) && !regeling)}
-              style={{
-                background: totalSel > 0 && (codes50.length === 0 || regeling) ? RED : "#ddd",
-                color: totalSel > 0 && (codes50.length === 0 || regeling) ? "white" : "#aaa",
-                border: "none", borderRadius: 10, padding: "13px",
-                fontWeight: 700, fontSize: 14,
-                cursor: totalSel > 0 ? "pointer" : "not-allowed",
-                width: "100%",
-                boxShadow: totalSel > 0 && (codes50.length === 0 || regeling) ? "0 2px 8px rgba(227,30,36,0.3)" : "none"
-              }}>
+              style={{ background: totalSel > 0 && (codes50.length === 0 || regeling) ? RED : "#ddd", color: totalSel > 0 && (codes50.length === 0 || regeling) ? "white" : "#aaa", border: "none", borderRadius: 10, padding: "13px", fontWeight: 700, fontSize: 14, cursor: totalSel > 0 ? "pointer" : "not-allowed", width: "100%", boxShadow: totalSel > 0 && (codes50.length === 0 || regeling) ? "0 2px 8px rgba(227,30,36,0.3)" : "none" }}>
               {calcLoading ? "Berekenen..." : "Bereken subsidie (" + totalSel + ")"}
             </button>
-
             <div style={{ background: "#fff5f5", borderRadius: 8, padding: "14px", border: "2px solid " + RED }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: RED, marginBottom: 6 }}>LET OP</div>
               <div style={{ fontSize: 12, color: DARKRED, lineHeight: 1.7, fontWeight: 500 }}>
