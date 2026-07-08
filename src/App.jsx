@@ -59,29 +59,29 @@ function printPDF(klant, adres, postcode, projNr, pct, cat, addTotaal, subsidie,
   const aHTML = addRows.map(r => "<tr style='background:#fafafa'><td>" + r.id + "</td><td>" + r.name + "</td><td style='text-align:right'>" + r.qty + " " + r.unit + "</td><td style='text-align:right'>€ " + r.subtotaal.toFixed(2) + "</td><td style='text-align:right'>€ " + (r.subtotaal * pct / 100).toFixed(2) + "</td></tr>").join("");
   const bHTML = bovenCat > 0 ? "<tr style='color:#c0392b;background:#fff5f5'><td colspan='4'><strong>Boven catalogusmaximum (eigen rekening, niet subsidiabel)</strong></td><td style='text-align:right'>€ " + bovenCat.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" : "";
 
-  // Meerkosten boven maatregelcatalogus HTML
-  const meerkostenGevuld = (meerkosten || []).filter(m => m.omschrijving.trim() && parseFloat(m.bedrag) > 0);
-  const meerkostenHTML = meerkostenGevuld.length > 0
-    ? "<tr><td colspan='5' style='font-weight:700;padding-top:10px;color:#c0392b;background:#fff5f5'>Meerkosten boven maatregelcatalogus (niet subsidiabel)</td></tr>" +
-      meerkostenGevuld.map(m => "<tr style='background:#fff8f8'><td colspan='3'><em>" + m.omschrijving + "</em></td><td style='text-align:right'>€ " + parseFloat(m.bedrag).toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td><td style='text-align:right;color:#c0392b'>€ 0,00</td></tr>").join("")
+  const mkGevuld = (meerkosten || []).filter(m => m.omschrijving.trim() && parseFloat(m.bedrag) > 0);
+  const mkTotaal = mkGevuld.reduce((s, m) => s + (parseFloat(m.bedrag) || 0), 0);
+  const mkHTML = mkGevuld.length > 0
+    ? "<tr><td colspan='5' style='font-weight:700;padding-top:10px;color:#c0392b;background:#fff5f5'>Meerkosten boven maatregelcatalogus (niet subsidiabel, eigen rekening)</td></tr>" +
+      mkGevuld.map(m => "<tr style='background:#fff8f8'><td colspan='3' style='font-style:italic'>" + m.omschrijving + "</td><td style='text-align:right'>€ " + parseFloat(m.bedrag).toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td><td style='text-align:right;color:#c0392b'>€ 0,00</td></tr>").join("")
     : "";
-  const meerkostenTotaal = meerkostenGevuld.reduce((s, m) => s + (parseFloat(m.bedrag) || 0), 0);
-  const meerkostenSamenvattingHTML = meerkostenTotaal > 0
-    ? "<tr style='color:#c0392b'><td><strong>Meerkosten boven catalogus (eigen rekening)</strong></td><td style='text-align:right'><strong>€ " + meerkostenTotaal.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</strong></td></tr>"
+  const mkSamenvattingHTML = mkTotaal > 0
+    ? "<tr style='color:#c0392b'><td><strong>Meerkosten boven catalogus (eigen rekening)</strong></td><td style='text-align:right'><strong>€ " + mkTotaal.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</strong></td></tr>"
     : "";
 
   const win = window.open("", "_blank");
-  win.document.write("<!DOCTYPE html><html lang='nl'><head><meta charset='UTF-8'><title>Subsidieoverzicht - " + klant + "</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Segoe UI,sans-serif;padding:40px;font-size:13px;color:#1a1a2e}.header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #E31E24;padding-bottom:16px;margin-bottom:24px}.logo{height:48px}.meta{text-align:right;font-size:12px;color:#555}.projnr{display:inline-block;background:#E31E24;color:white;padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:20px}thead tr{background:#E31E24;color:white}th{padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase}tbody tr{border-bottom:1px solid #eee}td{padding:8px 12px}.totaal{font-weight:800;font-size:15px;background:#fff0f0}.waarschuwing{background:#fff8f0;border:2px solid #f0a000;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;color:#7d4000;line-height:1.8;font-weight:600}.conform{background:#fff0f0;border:2px solid #E31E24;border-radius:8px;padding:16px;margin-bottom:20px;font-size:12px;color:#8B0000;line-height:1.8}.disc{font-size:11px;color:#888;border-top:1px solid #eee;padding-top:14px}.meerkosten-label{background:#fff0f0;color:#c0392b;font-weight:700;font-size:11px;padding:6px 12px}@media print{body{padding:20px}}</style></head><body>");
+  win.document.write("<!DOCTYPE html><html lang='nl'><head><meta charset='UTF-8'><title>Subsidieoverzicht - " + klant + "</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Segoe UI,sans-serif;padding:40px;font-size:13px;color:#1a1a2e}.header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #E31E24;padding-bottom:16px;margin-bottom:24px}.logo{height:48px}.meta{text-align:right;font-size:12px;color:#555}.projnr{display:inline-block;background:#E31E24;color:white;padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:20px}thead tr{background:#E31E24;color:white}th{padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase}tbody tr{border-bottom:1px solid #eee}td{padding:8px 12px}.totaal{font-weight:800;font-size:15px;background:#fff0f0}.waarschuwing{background:#fff8f0;border:2px solid #f0a000;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;color:#7d4000;line-height:1.8;font-weight:600}.conform{background:#fff0f0;border:2px solid #E31E24;border-radius:8px;padding:16px;margin-bottom:20px;font-size:12px;color:#8B0000;line-height:1.8}.disc{font-size:11px;color:#888;border-top:1px solid #eee;padding-top:14px}@media print{body{padding:20px}}</style></head><body>");
   win.document.write("<div class='header'><img src='https://subsidie-adviseur.vercel.app/images.png' class='logo' alt='Schipper Kozijnen' /><div class='meta'>" + (projNr ? "<span class='projnr'>Project: " + projNr + "</span><br>" : "") + "<strong>" + klant + "</strong><br>" + adres + "<br>" + postcode + "<br>Datum: " + datum + "</div></div>");
-  win.document.write("<table><thead><tr><th>Code</th><th>Maatregel</th><th style='text-align:right'>Hoev.</th><th style='text-align:right'>Catalogus</th><th style='text-align:right'>Subsidie " + pct + "%</th></tr></thead><tbody>" + rHTML + (aHTML ? "<tr><td colspan='5' style='font-weight:700;padding-top:10px;color:#E31E24;background:#fff5f5'>Bijkomende kosten</td></tr>" + aHTML : "") + meerkostenHTML + "</tbody></table>");
-  win.document.write("<table><tbody><tr><td>Cataloguswaarde maatregelen</td><td style='text-align:right'>€ " + cat.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" + (addTotaal > 0 ? "<tr><td>Bijkomende kosten</td><td style='text-align:right'>€ " + addTotaal.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" : "") + "<tr><td><strong>Subsidie (" + pct + "%)</strong></td><td style='text-align:right'><strong>€ " + subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</strong></td></tr><tr><td>Schipper Kozijnen offerte totaal</td><td style='text-align:right'>€ " + offerte.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" + bHTML + meerkostenSamenvattingHTML + "<tr class='totaal'><td><strong>Eigen bijdrage klant totaal</strong></td><td style='text-align:right;color:#c0392b'><strong>€ " + eigenBijdrage.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</strong></td></tr></tbody></table>");
+  win.document.write("<table><thead><tr><th>Code</th><th>Maatregel</th><th style='text-align:right'>Hoev.</th><th style='text-align:right'>Catalogus</th><th style='text-align:right'>Subsidie " + pct + "%</th></tr></thead><tbody>" + rHTML + (aHTML ? "<tr><td colspan='5' style='font-weight:700;padding-top:10px;color:#E31E24;background:#fff5f5'>Bijkomende kosten</td></tr>" + aHTML : "") + mkHTML + "</tbody></table>");
+  win.document.write("<table><tbody><tr><td>Cataloguswaarde maatregelen</td><td style='text-align:right'>€ " + cat.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" + (addTotaal > 0 ? "<tr><td>Bijkomende kosten</td><td style='text-align:right'>€ " + addTotaal.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" : "") + "<tr><td><strong>Subsidie (" + pct + "%)</strong></td><td style='text-align:right'><strong>€ " + subsidie.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</strong></td></tr><tr><td>Schipper Kozijnen offerte totaal</td><td style='text-align:right'>€ " + offerte.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</td></tr>" + bHTML + mkSamenvattingHTML + "<tr class='totaal'><td><strong>Eigen bijdrage klant totaal</strong></td><td style='text-align:right;color:#c0392b'><strong>€ " + eigenBijdrage.toLocaleString("nl-NL", { minimumFractionDigits: 2 }) + "</strong></td></tr></tbody></table>");
   win.document.write("<div class='waarschuwing'>LET OP: Dit overzicht is een INDICATIEVE berekening. De definitieve subsidie wordt vastgesteld door SNN na beoordeling van de volledige aanvraag. Aan dit document kunnen geen rechten worden ontleend. Schipper Kozijnen is niet verantwoordelijk voor het uiteindelijke subsidiebedrag.</div>");
   win.document.write("<div class='conform'>Deze offerte/factuur voldoet aan de voorwaarden van de maximale prijzen zoals deze zijn vastgesteld in de Maatregelencatalogus van de Isolatieaanpak Nij Begun. Het deel boven de catalogusprijs is voor rekening van de woningeigenaar en is niet subsidiabel.</div>");
   win.document.write("<div class='disc'>Schipper Kozijnen - Subsidieoverzicht gegenereerd via Nij Begun Maatregelencatalogus API</div>");
   win.document.write("</body></html>");
   win.document.close();
   setTimeout(() => win.print(), 500);
-  export default function App() {
+}
+export default function App() {
   const [measures, setMeasures] = useState([]);
   const [addCosts, setAddCosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +142,6 @@ function printPDF(klant, adres, postcode, projNr, pct, cat, addTotaal, subsidie,
   }, 0);
 
   const meerkostenTotaal = meerkosten.reduce((s, m) => s + (parseFloat(m.bedrag) || 0), 0);
-
   const voegMeerkostToe = () => setMeerkosten(m => [...m, { omschrijving: "", bedrag: "" }]);
   const verwijderMeerkosten = (i) => setMeerkosten(m => m.filter((_, j) => j !== i));
   const updateMeerkosten = (i, field, val) => setMeerkosten(m => m.map((x, j) => j === i ? { ...x, [field]: val } : x));
@@ -218,7 +217,6 @@ function printPDF(klant, adres, postcode, projNr, pct, cat, addTotaal, subsidie,
       <div style={{ color: "#666", fontSize: 13 }}>{apiError}</div>
     </div>
   );
-
   return (
     <div style={{ minHeight: "100vh", background: "#f7f7f7", fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#1a1a2e" }}>
       <div style={{ background: "linear-gradient(135deg," + DARKRED + "," + RED + ")", color: "white", padding: "12px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 4px 20px rgba(227,30,36,0.3)" }}>
@@ -259,6 +257,7 @@ function printPDF(klant, adres, postcode, projNr, pct, cat, addTotaal, subsidie,
               </button>
             ))}
           </div>
+
           {tab === "invoer" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ background: "white", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
@@ -319,47 +318,28 @@ function printPDF(klant, adres, postcode, projNr, pct, cat, addTotaal, subsidie,
                 </div>
               </div>
 
-              {/* MEERKOSTEN BOVEN MAATREGELCATALOGUS */}
               <div style={{ background: "white", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
                 <div style={{ background: "linear-gradient(135deg,#7d2a2a,#c0392b)", color: "white", padding: "14px 20px" }}>
                   <div style={{ fontWeight: 800, fontSize: 15 }}>Meerkosten boven maatregelcatalogus</div>
-                  <div style={{ fontSize: 11, opacity: 0.8, marginTop: 2 }}>Kosten boven catalogusprijs — niet subsidiabel, wel zichtbaar op overzicht</div>
+                  <div style={{ fontSize: 11, opacity: 0.8, marginTop: 2 }}>Niet subsidiabel — voor eigen rekening klant</div>
                 </div>
                 <div style={{ padding: "16px 20px" }}>
                   <div style={{ fontSize: 12, color: "#888", marginBottom: 14, lineHeight: 1.6 }}>
-                    Voeg hier kosten toe die boven de maatregelcatalogus uitkomen. Deze worden apart vermeld op het subsidieoverzicht en zijn voor rekening van de klant.
+                    Voeg kosten toe die boven de catalogusprijs uitkomen. Deze worden apart vermeld op het subsidieoverzicht.
                   </div>
                   {meerkosten.map((mk, i) => (
                     <div key={i} style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "center" }}>
-                      <input
-                        value={mk.omschrijving}
-                        onChange={e => updateMeerkosten(i, "omschrijving", e.target.value)}
-                        placeholder="Omschrijving meerkosten..."
-                        style={{ flex: 1, padding: "8px 12px", border: "1.5px solid #dde", borderRadius: 8, fontSize: 13, outline: "none" }}
-                      />
+                      <input value={mk.omschrijving} onChange={e => updateMeerkosten(i, "omschrijving", e.target.value)} placeholder="Omschrijving meerkosten..." style={{ flex: 1, padding: "8px 12px", border: "1.5px solid #dde", borderRadius: 8, fontSize: 13, outline: "none" }} />
                       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                         <span style={{ fontSize: 13, color: "#888", fontWeight: 700 }}>€</span>
-                        <input
-                          type="number"
-                          min="0"
-                          value={mk.bedrag}
-                          onChange={e => updateMeerkosten(i, "bedrag", e.target.value)}
-                          placeholder="0,00"
-                          style={{ width: 100, padding: "8px 10px", border: "1.5px solid #dde", borderRadius: 8, fontSize: 13, outline: "none", textAlign: "right" }}
-                        />
+                        <input type="number" min="0" value={mk.bedrag} onChange={e => updateMeerkosten(i, "bedrag", e.target.value)} placeholder="0,00" style={{ width: 100, padding: "8px 10px", border: "1.5px solid #dde", borderRadius: 8, fontSize: 13, outline: "none", textAlign: "right" }} />
                       </div>
                       {meerkosten.length > 1 && (
-                        <button
-                          onClick={() => verwijderMeerkosten(i)}
-                          style={{ padding: "8px 10px", borderRadius: 8, border: "1.5px solid #dde", background: "white", color: "#aaa", fontSize: 14, cursor: "pointer", fontWeight: 700 }}
-                        >✕</button>
+                        <button onClick={() => verwijderMeerkosten(i)} style={{ padding: "8px 10px", borderRadius: 8, border: "1.5px solid #dde", background: "white", color: "#aaa", fontSize: 14, cursor: "pointer", fontWeight: 700 }}>✕</button>
                       )}
                     </div>
                   ))}
-                  <button
-                    onClick={voegMeerkostToe}
-                    style={{ padding: "8px 16px", borderRadius: 8, border: "1.5px dashed #c0392b", background: "white", color: "#c0392b", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 4 }}
-                  >+ Meerkost toevoegen</button>
+                  <button onClick={voegMeerkostToe} style={{ padding: "8px 16px", borderRadius: 8, border: "1.5px dashed #c0392b", background: "white", color: "#c0392b", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 4 }}>+ Meerkost toevoegen</button>
                   {meerkostenTotaal > 0 && (
                     <div style={{ marginTop: 12, padding: "10px 14px", background: "#fff5f5", borderRadius: 8, border: "1px solid #f5c6c6", display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "#c0392b" }}>
                       <span>Totaal meerkosten (eigen rekening)</span>
@@ -399,7 +379,6 @@ function printPDF(klant, adres, postcode, projNr, pct, cat, addTotaal, subsidie,
               </div>
             </div>
           )}
-
           {tab === "resultaat" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {!hasResult && <div style={{ background: "white", borderRadius: 12, padding: "32px", textAlign: "center", color: "#888" }}>Klik eerst op Berekenen in het zijpaneel</div>}
@@ -470,14 +449,13 @@ function printPDF(klant, adres, postcode, projNr, pct, cat, addTotaal, subsidie,
                       ))}
                       {codesAdd.length > 0 && addCosts.filter(ac => selAdd[ac.id]).map(ac => {
                         const prijs = type === "diy" ? ac.attributes.diyValuePerUnit : ac.attributes.contractorValuePerUnit;
-                        const sub = prijs * (selAdd[ac.id] || 0) * pct50;
                         return (
                           <tr key={ac.id} style={{ borderBottom: "1px solid #eee", background: "#fafafa" }}>
                             <td style={{ padding: "6px 10px", fontWeight: 700, color: "#888" }}>{ac.id}</td>
                             <td style={{ padding: "6px 10px" }}>{ac.attributes.notes.replace("Betreft:", "").trim()}</td>
                             <td style={{ padding: "6px 10px", textAlign: "right" }}>{selAdd[ac.id]} {ac.attributes.unit}</td>
                             <td style={{ padding: "6px 10px", textAlign: "right" }}>€ {(prijs * selAdd[ac.id]).toFixed(2)}</td>
-                            <td style={{ padding: "6px 10px", textAlign: "right", color: RED, fontWeight: 700 }}>€ {sub.toFixed(2)}</td>
+                            <td style={{ padding: "6px 10px", textAlign: "right", color: RED, fontWeight: 700 }}>€ {(prijs * selAdd[ac.id] * pct50).toFixed(2)}</td>
                           </tr>
                         );
                       })}
@@ -496,5 +474,75 @@ function printPDF(klant, adres, postcode, projNr, pct, cat, addTotaal, subsidie,
                     </tbody>
                   </table>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, padding: "12px 16px", background: "#fff5f5", borderRadius: 8 }}>
-                    <div style={{ display: "flex", justifyContent: "space-betw
+                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cataloguswaarde</span><span>€ {cat50v.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                    {addTotaal > 0 && <div style={{ display: "flex", justifyContent: "space-between" }}><span>Bijkomende kosten</span><span>€ {addTotaal.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>}
+                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED, fontSize: 15 }}><span>Subsidie ({regeling === "100" ? "100" : "50"}%)</span><span>€ {sub50.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                    {parseFloat(off50) > 0 && <>
+                      <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #eee", paddingTop: 6 }}><span>Schipper offerte</span><span>€ {parseFloat(off50).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                      {meerkostenTotaal > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "#c0392b" }}><span>Meerkosten boven catalogus</span><span>€ {meerkostenTotaal.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>}
+                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 14, color: RED }}><span>Eigen bijdrage klant</span><span>€ {(parseFloat(off50) - sub50 + meerkostenTotaal).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>
+                    </>}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                    <button onClick={() => schipperPDF("50")} style={{ flex: 1, padding: "10px", background: RED, color: "white", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", fontSize: 13 }}>📄 Schipper PDF</button>
+                    <button onClick={() => nijBegunPDF("50")} disabled={pdfLoading} style={{ flex: 1, padding: "10px", background: "#888", color: "white", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", fontSize: 13 }}>📋 Nij Begun PDF</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={{ borderLeft: "1px solid #eee", background: "white", padding: "20px", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#aaa" }}>Samenvatting</div>
+
+          {codes30.length > 0 && (
+            <div style={{ background: "#fffdf0", borderRadius: 10, padding: "14px", border: "1px solid " + GOLD }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: DARKGOLD, marginBottom: 8 }}>30% Triple glas</div>
+              {codes30.map(c => <div key={c} style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: "#555" }}>{c}</span><span style={{ fontWeight: 600 }}>{sel30[c]}x</span></div>)}
+              {sub30 != null && <div style={{ borderTop: "1px solid #eee", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", fontWeight: 800, color: GOLD }}><span>Subsidie</span><span>€ {sub30.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>}
+            </div>
+          )}
+
+          {codes50.length > 0 && (
+            <div style={{ background: "#fff5f5", borderRadius: 10, padding: "14px", border: "1px solid " + RED }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: RED, marginBottom: 8 }}>{regeling === "100" ? "100%" : "50%"} HR++ glas</div>
+              {codes50.map(c => <div key={c} style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: "#555" }}>{c}</span><span style={{ fontWeight: 600 }}>{sel50[c]}x</span></div>)}
+              {codesAdd.map(c => <div key={c} style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ color: "#aaa" }}>{c}</span><span style={{ fontWeight: 600 }}>{selAdd[c]}x</span></div>)}
+              {sub50 != null && <div style={{ borderTop: "1px solid #eee", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED }}><span>Subsidie</span><span>€ {sub50.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span></div>}
+            </div>
+          )}
+
+          {meerkostenTotaal > 0 && (
+            <div style={{ background: "#fff8f8", borderRadius: 10, padding: "14px", border: "1px solid #f5c6c6" }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#c0392b", marginBottom: 8 }}>Meerkosten (eigen rekening)</div>
+              {meerkosten.filter(m => m.omschrijving.trim() && parseFloat(m.bedrag) > 0).map((m, i) => (
+                <div key={i} style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ color: "#555", flex: 1, marginRight: 8 }}>{m.omschrijving}</span>
+                  <span style={{ fontWeight: 600, color: "#c0392b" }}>€ {parseFloat(m.bedrag).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
+                </div>
+              ))}
+              <div style={{ borderTop: "1px solid #eee", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#c0392b" }}>
+                <span>Totaal</span><span>€ {meerkostenTotaal.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          )}
+
+          {calcError && <div style={{ background: "#fff0f0", border: "1px solid #f5c6c6", borderRadius: 8, padding: 12, fontSize: 12, color: RED }}>{calcError}</div>}
+
+          <button
+            onClick={calculate}
+            disabled={calcLoading || (codes30.length === 0 && codes50.length === 0)}
+            style={{ padding: "12px", background: codes30.length > 0 || codes50.length > 0 ? RED : "#ccc", color: "white", border: "none", borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: codes30.length > 0 || codes50.length > 0 ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+          >
+            {calcLoading ? "Berekenen..." : "Bereken subsidie →"}
+          </button>
+
+          <div style={{ fontSize: 10, color: "#bbb", lineHeight: 1.6 }}>
+            Selecteer maatregelen, vul hoeveelheden in en klik op Bereken. Resultaten verschijnen op het Resultaat tabblad.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
