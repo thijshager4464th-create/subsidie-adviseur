@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 const API = "https://api.nij-begun.project.abl.nu/api/v1";
 const PREFIXES_30 = ["V2-4", "V4-1-I"];
-const PREFIXES_50 = ["V2-1", "V2-2", "V2-3", "V4-3", "V4-4", "V6-1-C", "V6-1-D", "V1-2-A1"];
+const PREFIXES_50 = ["V2-1", "V2-2", "V2-3", "V4-3", "V4-4", "V6-1-C", "V6-1-D", "V1-2-A"];
 const RED = "#E31E24";
 const DARKRED = "#B01419";
 const GOLD = "#c49a00";
