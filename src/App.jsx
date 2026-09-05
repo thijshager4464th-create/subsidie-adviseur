@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 const API = "https://api.nij-begun.project.abl.nu/api/v1";
 const PREFIXES_30 = ["V2-4", "V4-1-I"];
-const PREFIXES_50 = ["V2-1", "V2-2", "V2-3", "V4-3", "V4-4", "V6-1-C", "V6-1-D", "V1-2-A"];
+const PREFIXES_50 = ["V2-1", "V2-2", "V2-3", "V4-3", "V4-4", "V6-1-C", "V6-1-D"];
 const RED = "#E31E24";
 const DARKRED = "#B01419";
 const GOLD = "#c49a00";
@@ -43,24 +43,36 @@ function Kaart({ id, name, unit, unitCost, isSelected, onToggle, onQtyChange, qt
 }
 
 function printPDF(opts) {
-  const { klant, adres, postcode, projNr, pct, cat, subsidie, offerte, boven, eigen, rows, mkRows, datum } = opts;
+  const { klant, adres, postcode, projNr, datum, r30, r50, mkRows } = opts;
 
-  const rHTML = rows.map(r => "<tr><td>" + r.id + "</td><td>" + r.name + "</td><td style='text-align:right'>" + r.qty + " " + r.unit + "</td><td style='text-align:right'>" + eur(r.totaal) + "</td><td style='text-align:right'>" + eur(r.totaal * pct / 100) + "</td></tr>").join("");
+  const sectionHTML = (r, label) => {
+    if (!r) return "";
+    const rHTML = r.rows.map(row => "<tr><td>" + row.id + "</td><td>" + row.name + "</td><td style='text-align:right'>" + row.qty + " " + row.unit + "</td><td style='text-align:right'>" + eur(row.totaal) + "</td><td style='text-align:right'>" + eur(row.totaal * r.pct / 100) + "</td></tr>").join("");
+    return "<h3 style='margin:16px 0 8px;color:#E31E24'>" + label + "</h3><table><thead><tr><th>Code</th><th>Maatregel</th><th style='text-align:right'>Hoev.</th><th style='text-align:right'>Catalogus</th><th style='text-align:right'>Subsidie " + r.pct + "%</th></tr></thead><tbody>" + rHTML + "</tbody></table>";
+  };
 
   const mkHTML = mkRows.length > 0
-    ? "<tr><td colspan='5' style='font-weight:700;padding-top:10px;color:#c0392b;background:#fff5f5'>Specificatie meerkosten boven maatregelcatalogus (niet subsidiabel)</td></tr>" +
-      mkRows.map(m => "<tr style='background:#fff8f8'><td colspan='3' style='font-style:italic'>" + m.omschrijving + "</td><td style='text-align:right'>" + eur(m.bedrag) + "</td><td style='text-align:right;color:#c0392b'>€ 0,00</td></tr>").join("")
+    ? "<table><tbody><tr><td colspan='2' style='font-weight:700;padding-top:10px;color:#c0392b;background:#fff5f5'>Specificatie meerkosten boven maatregelcatalogus (niet subsidiabel)</td></tr>" +
+      mkRows.map(m => "<tr style='background:#fff8f8'><td style='font-style:italic'>" + m.omschrijving + "</td><td style='text-align:right'>" + eur(m.bedrag) + "</td></tr>").join("") + "</tbody></table>"
     : "";
 
-  const bovenHTML = boven > 0 ? "<tr style='color:#c0392b'><td><strong>Meerkosten boven catalogusmaximum (eigen rekening, niet subsidiabel)</strong></td><td style='text-align:right'><strong>" + eur(boven) + "</strong></td></tr>" : "";
-  const offerteHTML = offerte > 0 ? "<tr><td>Schipper Kozijnen offerte totaal</td><td style='text-align:right'>" + eur(offerte) + "</td></tr>" : "";
-  const eigenHTML = offerte > 0 ? "<tr class='totaal'><td><strong>Eigen bijdrage klant totaal</strong></td><td style='text-align:right;color:#c0392b'><strong>" + eur(eigen) + "</strong></td></tr>" : "";
+  const catTotaal = (r30?.cat || 0) + (r50?.cat || 0);
+  const bovenTotaal = (r30?.boven || 0) + (r50?.boven || 0);
+  const offerteTotaal = (r30?.offerte || 0) + (r50?.offerte || 0);
+  const subsidieTotaal = (r30?.subsidie || 0) + (r50?.subsidie || 0);
+  const eigenTotaal = offerteTotaal - subsidieTotaal;
+
+  const bovenHTML = bovenTotaal > 0 ? "<tr style='color:#c0392b'><td><strong>Meerkosten boven catalogusmaximum (eigen rekening, niet subsidiabel)</strong></td><td style='text-align:right'><strong>" + eur(bovenTotaal) + "</strong></td></tr>" : "";
+  const offerteHTML = offerteTotaal > 0 ? "<tr><td>Schipper Kozijnen offerte totaal</td><td style='text-align:right'>" + eur(offerteTotaal) + "</td></tr>" : "";
+  const eigenHTML = offerteTotaal > 0 ? "<tr class='totaal'><td><strong>Eigen bijdrage klant totaal</strong></td><td style='text-align:right;color:#c0392b'><strong>" + eur(eigenTotaal) + "</strong></td></tr>" : "";
 
   const win = window.open("", "_blank");
   win.document.write("<!DOCTYPE html><html lang='nl'><head><meta charset='UTF-8'><title>Subsidieoverzicht - " + klant + "</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Segoe UI,sans-serif;padding:40px;font-size:13px;color:#1a1a2e}.header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #E31E24;padding-bottom:16px;margin-bottom:24px}.logo{height:48px}.meta{text-align:right;font-size:12px;color:#555}.projnr{display:inline-block;background:#E31E24;color:white;padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:20px}thead tr{background:#E31E24;color:white}th{padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase}tbody tr{border-bottom:1px solid #eee}td{padding:8px 12px}.totaal{font-weight:800;font-size:15px;background:#fff0f0}.waarschuwing{background:#fff8f0;border:2px solid #f0a000;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;color:#7d4000;line-height:1.8;font-weight:600}.conform{background:#fff0f0;border:2px solid #E31E24;border-radius:8px;padding:16px;margin-bottom:20px;font-size:12px;color:#8B0000;line-height:1.8}.disc{font-size:11px;color:#888;border-top:1px solid #eee;padding-top:14px}@media print{body{padding:20px}}</style></head><body>");
   win.document.write("<div class='header'><img src='https://subsidie-adviseur.vercel.app/images.png' class='logo' alt='Schipper Kozijnen' /><div class='meta'>" + (projNr ? "<span class='projnr'>Project: " + projNr + "</span><br>" : "") + "<strong>" + klant + "</strong><br>" + adres + "<br>" + postcode + "<br>Datum: " + datum + "</div></div>");
-  win.document.write("<table><thead><tr><th>Code</th><th>Maatregel</th><th style='text-align:right'>Hoev.</th><th style='text-align:right'>Catalogus</th><th style='text-align:right'>Subsidie " + pct + "%</th></tr></thead><tbody>" + rHTML + mkHTML + "</tbody></table>");
-  win.document.write("<table><tbody><tr><td>Cataloguswaarde maatregelen</td><td style='text-align:right'>" + eur(cat) + "</td></tr>" + bovenHTML + offerteHTML + "<tr><td><strong>Subsidie (" + pct + "%)</strong></td><td style='text-align:right'><strong>" + eur(subsidie) + "</strong></td></tr>" + eigenHTML + "</tbody></table>");
+  win.document.write(sectionHTML(r30, "Regeling 30% (triple-glas)"));
+  win.document.write(sectionHTML(r50, "Regeling " + (r50?.pct || 50) + "%"));
+  win.document.write(mkHTML);
+  win.document.write("<table><tbody><tr><td>Cataloguswaarde maatregelen totaal</td><td style='text-align:right'>" + eur(catTotaal) + "</td></tr>" + bovenHTML + offerteHTML + "<tr><td><strong>Subsidie totaal</strong></td><td style='text-align:right'><strong>" + eur(subsidieTotaal) + "</strong></td></tr>" + eigenHTML + "</tbody></table>");
   win.document.write("<div class='waarschuwing'>LET OP: Dit overzicht is een INDICATIEVE berekening. De definitieve subsidie wordt vastgesteld door SNN na beoordeling van de volledige aanvraag. Aan dit document kunnen geen rechten worden ontleend. Schipper Kozijnen is niet verantwoordelijk voor het uiteindelijke subsidiebedrag.</div>");
   win.document.write("<div class='conform'>Deze offerte/factuur voldoet aan de voorwaarden van de maximale prijzen zoals deze zijn vastgesteld in de Maatregelencatalogus van de Isolatieaanpak Nij Begun. Het deel boven de catalogusprijs is voor rekening van de woningeigenaar en is niet subsidiabel.</div>");
   win.document.write("<div class='disc'>Schipper Kozijnen - Subsidieoverzicht gegenereerd via Nij Begun Maatregelencatalogus</div>");
@@ -158,14 +170,12 @@ export default function App() {
     })
   ];
 
-  const schipperPDF = (rt) => {
+  const schipperPDF = () => {
     const mkRows = meerkosten.filter(m => m.omschrijving.trim() && parseFloat(m.bedrag) > 0).map(m => ({ omschrijving: m.omschrijving, bedrag: parseFloat(m.bedrag) }));
     const datum = new Date().toLocaleDateString("nl-NL", { day: "2-digit", month: "long", year: "numeric" });
-    if (rt === "30") {
-      printPDF({ klant: klant || "Klant", adres, postcode, projNr, pct: 30, cat: cat30, subsidie: sub30, offerte: o30, boven: boven30, eigen: eigen30, rows: rows30, mkRows, datum });
-    } else {
-      printPDF({ klant: klant || "Klant", adres, postcode, projNr, pct: pct50, cat: cat50, subsidie: sub50, offerte: o50, boven: boven50, eigen: eigen50, rows: rows50, mkRows, datum });
-    }
+    const r30 = rows30.length > 0 ? { pct: 30, cat: cat30, subsidie: sub30, offerte: o30, boven: boven30, rows: rows30 } : null;
+    const r50 = rows50.length > 0 ? { pct: pct50, cat: cat50, subsidie: sub50, offerte: o50, boven: boven50, rows: rows50 } : null;
+    printPDF({ klant: klant || "Klant", adres, postcode, projNr, datum, r30, r50, mkRows });
   };
 
   if (loading) return (
@@ -361,7 +371,6 @@ export default function App() {
                       <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 14, color: RED }}><span>Eigen bijdrage klant</span><span>{eur(eigen30)}</span></div>
                     </>}
                   </div>
-                  <button onClick={() => schipperPDF("30")} style={{ width: "100%", marginTop: 14, padding: "10px", background: RED, color: "white", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", fontSize: 13 }}>📄 Genereer Schipper PDF</button>
                 </div>
               )}
 
@@ -411,8 +420,11 @@ export default function App() {
                       <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 14, color: RED }}><span>Eigen bijdrage klant</span><span>{eur(eigen50)}</span></div>
                     </>}
                   </div>
-                  <button onClick={() => schipperPDF("50")} style={{ width: "100%", marginTop: 14, padding: "10px", background: RED, color: "white", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", fontSize: 13 }}>📄 Genereer Schipper PDF</button>
                 </div>
+              )}
+
+              {(codes30.length > 0 || codes50.length > 0) && (
+                <button onClick={() => schipperPDF()} style={{ width: "100%", padding: "12px", background: RED, color: "white", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", fontSize: 14 }}>📄 Genereer Schipper PDF</button>
               )}
             </div>
           )}
