@@ -105,9 +105,27 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const [mRes, acRes] = await Promise.all([apiFetch("/measures"), apiFetch("/measures/V2-3-A4")]);
+        const [mRes, acV23, acV12, acV42] = await Promise.all([
+          apiFetch("/measures"),
+          apiFetch("/measures/V2-3-A4"),
+          apiFetch("/measures/V1-2-A1"),
+          apiFetch("/measures/V4-2-A1"),
+        ]);
         setMeasures((mRes.data || []).filter(m => isSchipper(m.id)));
-        setAddCosts(acRes.data?.attributes?.additionalCosts || []);
+
+        // Bijkomende kosten die we willen tonen voor de nieuwe V1-2/V4-2 maatregelen
+        const EXTRA_ADDCOST_IDS = ["V1-2-X1", "V1-2-X2", "V1-2-X3", "V1-2-X4", "V4-2-X4"];
+
+        const v23Costs = (acV23.data?.attributes?.additionalCosts || [])
+          .filter(c => c.id !== "V1-2-X3"); // V2-3-A4's lijst bevat een verkeerd gelabeld "V1-2-X3" (is eigenlijk een V2-3 hoogwerker-item) — dat negeren we, de echte V1-2-X3 komt hieronder uit de V1-2 fetch
+        const v12Costs = (acV12.data?.attributes?.additionalCosts || [])
+          .filter(c => EXTRA_ADDCOST_IDS.includes(c.id));
+        const v42Costs = (acV42.data?.attributes?.additionalCosts || [])
+          .filter(c => EXTRA_ADDCOST_IDS.includes(c.id));
+
+        const mergedCosts = [...v23Costs, ...v12Costs, ...v42Costs];
+        const dedupedCosts = Array.from(new Map(mergedCosts.map(c => [c.id, c])).values());
+        setAddCosts(dedupedCosts);
       } catch (e) { setApiError(e.message); }
       finally { setLoading(false); }
     })();
