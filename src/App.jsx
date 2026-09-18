@@ -105,11 +105,9 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const [mRes, acV23, acV12, acV42] = await Promise.all([
+        const [mRes, acV23] = await Promise.all([
           apiFetch("/measures"),
           apiFetch("/measures/V2-3-A4"),
-          apiFetch("/measures/V1-2-A1"),
-          apiFetch("/measures/V4-2-A1"),
         ]);
         setMeasures((mRes.data || []).filter(m => isSchipper(m.id)));
 
@@ -117,11 +115,24 @@ export default function App() {
         const EXTRA_ADDCOST_IDS = ["V1-2-X1", "V1-2-X2", "V1-2-X3", "V1-2-X4", "V4-2-X4"];
 
         const v23Costs = (acV23.data?.attributes?.additionalCosts || [])
-          .filter(c => c.id !== "V1-2-X3"); // V2-3-A4's lijst bevat een verkeerd gelabeld "V1-2-X3" (is eigenlijk een V2-3 hoogwerker-item) — dat negeren we, de echte V1-2-X3 komt hieronder uit de V1-2 fetch
-        const v12Costs = (acV12.data?.attributes?.additionalCosts || [])
-          .filter(c => EXTRA_ADDCOST_IDS.includes(c.id));
-        const v42Costs = (acV42.data?.attributes?.additionalCosts || [])
-          .filter(c => EXTRA_ADDCOST_IDS.includes(c.id));
+          .filter(c => c.id !== "V1-2-X3"); // V2-3-A4's lijst bevat een verkeerd gelabeld "V1-2-X3" (is eigenlijk een V2-3 hoogwerker-item) — dat negeren we, de echte V1-2-X3 komt (indien beschikbaar) uit de V1-2 fetch hieronder
+
+        // Deze twee fetches zijn best-effort: als het endpoint niet bestaat (404) of iets anders misgaat,
+        // laten we die familie's bijkomende kosten gewoon leeg in plaats van de hele app te breken.
+        const [acV12Result, acV42Result] = await Promise.allSettled([
+          apiFetch("/measures/V1-2-A1"),
+          apiFetch("/measures/V4-2-A1"),
+        ]);
+
+        const v12Costs = acV12Result.status === "fulfilled"
+          ? (acV12Result.value.data?.attributes?.additionalCosts || []).filter(c => EXTRA_ADDCOST_IDS.includes(c.id))
+          : [];
+        if (acV12Result.status === "rejected") console.warn("V1-2 bijkomende kosten niet geladen:", acV12Result.reason?.message);
+
+        const v42Costs = acV42Result.status === "fulfilled"
+          ? (acV42Result.value.data?.attributes?.additionalCosts || []).filter(c => EXTRA_ADDCOST_IDS.includes(c.id))
+          : [];
+        if (acV42Result.status === "rejected") console.warn("V4-2 bijkomende kosten niet geladen:", acV42Result.reason?.message);
 
         const mergedCosts = [...v23Costs, ...v12Costs, ...v42Costs];
         const dedupedCosts = Array.from(new Map(mergedCosts.map(c => [c.id, c])).values());
