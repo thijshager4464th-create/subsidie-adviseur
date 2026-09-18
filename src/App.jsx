@@ -117,8 +117,9 @@ export default function App() {
         const EXTRA_ADDCOST_IDS = ["V1-2-X1", "V1-2-X2", "V1-2-X3", "V1-2-X4", "V4-2-X4"];
 
         const v23Costs = (findMeasure("V2-3-A4")?.attributes?.additionalCosts || [])
-          .filter(c => c.id !== "V1-2-X3"); // V2-3-A4's lijst bevat een verkeerd gelabeld "V1-2-X3" (is eigenlijk een V2-3 hoogwerker-item) — de echte V1-2-X3 komt hieronder uit V1-2-A1
-        const v12Costs = (findMeasure("V1-2-A1")?.attributes?.additionalCosts || [])
+          .filter(c => c.id !== "V1-2-X3"); // V2-3-A4's lijst bevat een verkeerd gelabeld "V1-2-X3" (is eigenlijk een V2-3 hoogwerker-item) — de echte V1-2-X3 komt hieronder uit V1-2-A
+        // Let op: voor de V1-2 familie is "V1-2-A1" alleen het regularCosts-id, de measure zelf heet "V1-2-A"
+        const v12Costs = (findMeasure("V1-2-A")?.attributes?.additionalCosts || [])
           .filter(c => EXTRA_ADDCOST_IDS.includes(c.id));
         const v42Costs = (findMeasure("V4-2-A1")?.attributes?.additionalCosts || [])
           .filter(c => EXTRA_ADDCOST_IDS.includes(c.id));
