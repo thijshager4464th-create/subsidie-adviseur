@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 
 const API = "https://api.nij-begun.project.abl.nu/api/v1";
 const PREFIXES_30 = ["V2-4", "V4-1-I"];
-const PREFIXES_50 = ["V2-1", "V2-2", "V2-3", "V4-3", "V4-4", "V6-1-C", "V6-1-D"];
+const PREFIXES_50 = [
+  "V2-1", "V2-2", "V2-3", "V4-3", "V4-4", "V6-1-C", "V6-1-D",
+  "V1-2-A", "V1-2-B", "V1-2-X1", "V1-2-X2", "V1-2-X3", "V1-2-X4",
+  "V4-2-A", "V4-2-B", "V4-2-C", "V4-2-X4"
+];
 const RED = "#E31E24";
 const DARKRED = "#B01419";
 const GOLD = "#c49a00";
@@ -255,8 +259,8 @@ export default function App() {
               <div style={{ background: "white", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
                 <div style={{ background: "linear-gradient(135deg," + DARKRED + "," + RED + ")", color: "white", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
-                    <div style={{ fontWeight: 800, fontSize: 15 }}>{pct50}% Regeling - HR++ glas</div>
-                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 2 }}>Vervangen kozijn met HR++ glas</div>
+                    <div style={{ fontWeight: 800, fontSize: 15 }}>{pct50}% Regeling</div>
+                    <div style={{ fontSize: 11, opacity: 0.8, marginTop: 2 }}>Kozijnen (HR++ glas), gevelisolatie &amp; dakisolatie platdak</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ display: "flex", background: "rgba(255,255,255,0.15)", borderRadius: 6, overflow: "hidden" }}>
@@ -376,7 +380,7 @@ export default function App() {
 
               {codes50.length > 0 && (
                 <div style={{ background: "white", borderRadius: 12, padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.07)", borderTop: "3px solid " + RED }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: RED, marginBottom: 16 }}>{pct50}% Regeling - HR++ glas</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: RED, marginBottom: 16 }}>{pct50}% Regeling</div>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, marginBottom: 16 }}>
                     <thead>
                       <tr style={{ background: RED, color: "white" }}>
@@ -458,7 +462,7 @@ export default function App() {
 
           {codes50.length > 0 && (
             <div style={{ background: "#fff5f5", borderRadius: 10, padding: "14px", border: "1px solid " + RED }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: RED, marginBottom: 8 }}>{pct50}% HR++ glas</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: RED, marginBottom: 8 }}>{pct50}% Regeling</div>
               <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span>Cataloguswaarde</span><span style={{ fontWeight: 600 }}>{eur(cat50)}</span></div>
               <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED, marginBottom: 10 }}><span>Subsidie</span><span>{eur(sub50)}</span></div>
               <label style={{ fontSize: 10, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 4 }}>Offerte incl. BTW</label>
