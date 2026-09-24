@@ -51,13 +51,26 @@ function printPDF(opts) {
 
   const sectionHTML = (r, label) => {
     if (!r) return "";
-    const rHTML = r.rows.map(row => "<tr><td>" + row.id + "</td><td>" + row.name + "</td><td style='text-align:right'>" + row.qty + " " + row.unit + "</td><td style='text-align:right'>" + eur(row.totaal) + "</td><td style='text-align:right'>" + eur(row.totaal * r.pct / 100) + "</td></tr>").join("");
-    return "<h3 style='margin:16px 0 8px;color:#E31E24'>" + label + "</h3><table><thead><tr><th>Code</th><th>Maatregel</th><th style='text-align:right'>Hoev.</th><th style='text-align:right'>Catalogus</th><th style='text-align:right'>Subsidie " + r.pct + "%</th></tr></thead><tbody>" + rHTML + "</tbody></table>";
+    const rHTML = r.rows.map(row =>
+      "<tr>" +
+      "<td class='code'>" + row.id + "</td>" +
+      "<td>" + row.name + "</td>" +
+      "<td class='num'>" + row.qty + "&nbsp;" + row.unit + "</td>" +
+      "<td class='num'>" + eur(row.totaal) + "</td>" +
+      "<td class='num'>" + eur(row.totaal * r.pct / 100) + "</td>" +
+      "</tr>"
+    ).join("");
+    return "<div class='sectie'><h3>" + label + "</h3><table class='maatregelen'>" +
+      "<colgroup><col class='c-code'><col><col class='c-hoev'><col class='c-eur'><col class='c-eur'></colgroup>" +
+      "<thead><tr><th>Code</th><th>Maatregel</th><th class='num'>Hoev.</th><th class='num'>Catalogus</th><th class='num'>Subsidie " + r.pct + "%</th></tr></thead>" +
+      "<tbody>" + rHTML + "</tbody></table></div>";
   };
 
+  const colsTwee = "<colgroup><col><col class='c-bedrag'></colgroup>";
+
   const mkHTML = mkRows.length > 0
-    ? "<table><tbody><tr><td colspan='2' style='font-weight:700;padding-top:10px;color:#c0392b;background:#fff5f5'>Specificatie meerkosten boven maatregelcatalogus (niet subsidiabel)</td></tr>" +
-      mkRows.map(m => "<tr style='background:#fff8f8'><td style='font-style:italic'>" + m.omschrijving + "</td><td style='text-align:right'>" + eur(m.bedrag) + "</td></tr>").join("") + "</tbody></table>"
+    ? "<table class='samenvatting mk'>" + colsTwee + "<tbody><tr><td colspan='2' class='mk-titel'>Specificatie meerkosten boven maatregelcatalogus (niet subsidiabel)</td></tr>" +
+      mkRows.map(m => "<tr class='mk-rij'><td><em>" + m.omschrijving + "</em></td><td class='num'>" + eur(m.bedrag) + "</td></tr>").join("") + "</tbody></table>"
     : "";
 
   const catTotaal = (r30?.cat || 0) + (r50?.cat || 0);
@@ -66,20 +79,50 @@ function printPDF(opts) {
   const subsidieTotaal = (r30?.subsidie || 0) + (r50?.subsidie || 0);
   const eigenTotaal = offerteTotaal - subsidieTotaal;
 
-  const bovenHTML = bovenTotaal > 0 ? "<tr style='color:#c0392b'><td><strong>Meerkosten boven catalogusmaximum (eigen rekening, niet subsidiabel)</strong></td><td style='text-align:right'><strong>" + eur(bovenTotaal) + "</strong></td></tr>" : "";
-  const offerteHTML = offerteTotaal > 0 ? "<tr><td>Schipper Kozijnen offerte totaal</td><td style='text-align:right'>" + eur(offerteTotaal) + "</td></tr>" : "";
-  const eigenHTML = offerteTotaal > 0 ? "<tr class='totaal'><td><strong>Eigen bijdrage klant totaal</strong></td><td style='text-align:right;color:#c0392b'><strong>" + eur(eigenTotaal) + "</strong></td></tr>" : "";
+  const bovenHTML = bovenTotaal > 0 ? "<tr style='color:#c0392b'><td><strong>Meerkosten boven catalogusmaximum (eigen rekening, niet subsidiabel)</strong></td><td class='num'><strong>" + eur(bovenTotaal) + "</strong></td></tr>" : "";
+  const offerteHTML = offerteTotaal > 0 ? "<tr><td>Schipper Kozijnen offerte totaal</td><td class='num'>" + eur(offerteTotaal) + "</td></tr>" : "";
+  const eigenHTML = offerteTotaal > 0 ? "<tr class='totaal'><td><strong>Eigen bijdrage klant totaal</strong></td><td class='num' style='color:#c0392b'><strong>" + eur(eigenTotaal) + "</strong></td></tr>" : "";
+
+  const css =
+    "@page{size:A4;margin:14mm 12mm}" +
+    "*{box-sizing:border-box;margin:0;padding:0}" +
+    "html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
+    "body{font-family:Segoe UI,sans-serif;padding:40px;font-size:13px;color:#1a1a2e}" +
+    ".header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #E31E24;padding-bottom:16px;margin-bottom:24px}" +
+    ".logo{height:48px}.meta{text-align:right;font-size:12px;color:#555}" +
+    ".projnr{display:inline-block;background:#E31E24;color:white;padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px;margin-bottom:6px}" +
+    "h3{margin:16px 0 8px;color:#E31E24;break-after:avoid;page-break-after:avoid}" +
+    "table{width:100%;border-collapse:collapse;margin-bottom:20px;table-layout:fixed}" +
+    "thead{display:table-header-group}" +
+    "thead tr{background:#E31E24;color:white}" +
+    "th{padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;white-space:nowrap}" +
+    "tr{break-inside:avoid;page-break-inside:avoid}" +
+    "tbody tr{border-bottom:1px solid #eee}" +
+    "td{padding:8px 10px;vertical-align:middle}" +
+    ".c-code{width:88px}.c-hoev{width:80px}.c-eur{width:112px}.c-bedrag{width:140px}" +
+    ".code{white-space:nowrap;font-weight:600}" +
+    ".num{text-align:right;white-space:nowrap}" +
+    ".mk-titel{font-weight:700;padding-top:10px;color:#c0392b;background:#fff5f5}" +
+    ".mk-rij{background:#fff8f8}" +
+    ".totaal{font-weight:800;font-size:15px;background:#fff0f0}" +
+    ".afsluiting{break-inside:avoid;page-break-inside:avoid}" +
+    ".waarschuwing{background:#fff8f0;border:2px solid #f0a000;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;color:#7d4000;line-height:1.8;font-weight:600}" +
+    ".conform{background:#fff0f0;border:2px solid #E31E24;border-radius:8px;padding:16px;margin-bottom:20px;font-size:12px;color:#8B0000;line-height:1.8}" +
+    ".disc{font-size:11px;color:#888;border-top:1px solid #eee;padding-top:14px}" +
+    "@media print{body{padding:0}}";
 
   const win = window.open("", "_blank");
-  win.document.write("<!DOCTYPE html><html lang='nl'><head><meta charset='UTF-8'><title>Subsidieoverzicht - " + klant + "</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Segoe UI,sans-serif;padding:40px;font-size:13px;color:#1a1a2e}.header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #E31E24;padding-bottom:16px;margin-bottom:24px}.logo{height:48px}.meta{text-align:right;font-size:12px;color:#555}.projnr{display:inline-block;background:#E31E24;color:white;padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin-bottom:20px}thead tr{background:#E31E24;color:white}th{padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase}tbody tr{border-bottom:1px solid #eee}td{padding:8px 12px}.totaal{font-weight:800;font-size:15px;background:#fff0f0}.waarschuwing{background:#fff8f0;border:2px solid #f0a000;border-radius:8px;padding:16px;margin-bottom:20px;font-size:13px;color:#7d4000;line-height:1.8;font-weight:600}.conform{background:#fff0f0;border:2px solid #E31E24;border-radius:8px;padding:16px;margin-bottom:20px;font-size:12px;color:#8B0000;line-height:1.8}.disc{font-size:11px;color:#888;border-top:1px solid #eee;padding-top:14px}@media print{body{padding:20px}}</style></head><body>");
+  win.document.write("<!DOCTYPE html><html lang='nl'><head><meta charset='UTF-8'><title>Subsidieoverzicht - " + klant + "</title><style>" + css + "</style></head><body>");
   win.document.write("<div class='header'><img src='https://subsidie-adviseur.vercel.app/images.png' class='logo' alt='Schipper Kozijnen' /><div class='meta'>" + (projNr ? "<span class='projnr'>Project: " + projNr + "</span><br>" : "") + "<strong>" + klant + "</strong><br>" + adres + "<br>" + postcode + "<br>Datum: " + datum + "</div></div>");
   win.document.write(sectionHTML(r30, "Regeling 30% (triple-glas)"));
   win.document.write(sectionHTML(r50, "Regeling " + (r50?.pct || 50) + "%"));
+  win.document.write("<div class='afsluiting'>");
   win.document.write(mkHTML);
-  win.document.write("<table><tbody><tr><td>Cataloguswaarde maatregelen totaal</td><td style='text-align:right'>" + eur(catTotaal) + "</td></tr>" + bovenHTML + offerteHTML + "<tr><td><strong>Subsidie totaal</strong></td><td style='text-align:right'><strong>" + eur(subsidieTotaal) + "</strong></td></tr>" + eigenHTML + "</tbody></table>");
+  win.document.write("<table class='samenvatting'>" + colsTwee + "<tbody><tr><td>Cataloguswaarde maatregelen totaal</td><td class='num'>" + eur(catTotaal) + "</td></tr>" + bovenHTML + offerteHTML + "<tr><td><strong>Subsidie totaal</strong></td><td class='num'><strong>" + eur(subsidieTotaal) + "</strong></td></tr>" + eigenHTML + "</tbody></table>");
   win.document.write("<div class='waarschuwing'>LET OP: Dit overzicht is een INDICATIEVE berekening. De definitieve subsidie wordt vastgesteld door SNN na beoordeling van de volledige aanvraag. Aan dit document kunnen geen rechten worden ontleend. Schipper Kozijnen is niet verantwoordelijk voor het uiteindelijke subsidiebedrag.</div>");
   win.document.write("<div class='conform'>Deze offerte/factuur voldoet aan de voorwaarden van de maximale prijzen zoals deze zijn vastgesteld in de Maatregelencatalogus van de Isolatieaanpak Nij Begun. Het deel boven de catalogusprijs is voor rekening van de woningeigenaar en is niet subsidiabel.</div>");
   win.document.write("<div class='disc'>Schipper Kozijnen - Subsidieoverzicht gegenereerd via Nij Begun Maatregelencatalogus</div>");
+  win.document.write("</div>");
   win.document.write("</body></html>");
   win.document.close();
   setTimeout(() => win.print(), 500);
