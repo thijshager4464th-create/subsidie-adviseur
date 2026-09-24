@@ -47,7 +47,7 @@ function Kaart({ id, name, unit, unitCost, isSelected, onToggle, onQtyChange, qt
 }
 
 function printPDF(opts) {
-  const { klant, adres, postcode, projNr, datum, r30, r50, mkRows } = opts;
+  const { klant, adres, postcode, projNr, datum, r30, r50, mkRows, offerte, boven } = opts;
 
   const sectionHTML = (r, label) => {
     if (!r) return "";
@@ -74,8 +74,8 @@ function printPDF(opts) {
     : "";
 
   const catTotaal = (r30?.cat || 0) + (r50?.cat || 0);
-  const bovenTotaal = (r30?.boven || 0) + (r50?.boven || 0);
-  const offerteTotaal = (r30?.offerte || 0) + (r50?.offerte || 0);
+  const bovenTotaal = boven || 0;
+  const offerteTotaal = offerte || 0;
   const subsidieTotaal = (r30?.subsidie || 0) + (r50?.subsidie || 0);
   const eigenTotaal = offerteTotaal - subsidieTotaal;
 
@@ -141,8 +141,7 @@ export default function App() {
   const [sel50, setSel50] = useState({});
   const [selAdd, setSelAdd] = useState({});
   const [tab, setTab] = useState("invoer");
-  const [off30, setOff30] = useState("");
-  const [off50, setOff50] = useState("");
+  const [offerte, setOfferte] = useState("");
   const [meerkosten, setMeerkosten] = useState([{ omschrijving: "", bedrag: "" }]);
 
   useEffect(() => {
@@ -180,6 +179,7 @@ export default function App() {
   const codes30 = Object.keys(sel30);
   const codes50 = Object.keys(sel50);
   const codesAdd = Object.keys(selAdd);
+  const has50 = codes50.length > 0 || codesAdd.length > 0; // 50%-blok tonen bij maatregelen OF bijkomende kosten
 
   const g30 = {};
   m30.forEach(m => { const s = m.attributes.subcategory?.attributes?.name || "Overig"; if (!g30[s]) g30[s] = []; g30[s].push(m); });
@@ -206,15 +206,15 @@ export default function App() {
   const sub30 = cat30 * 0.30;
   const sub50 = cat50 * pct50 / 100;
 
-  const o30 = parseFloat(off30) || 0;
-  const o50 = parseFloat(off50) || 0;
-  const boven30 = Math.max(0, o30 - cat30);
-  const boven50 = Math.max(0, o50 - cat50);
-  const eigen30 = o30 - sub30;
-  const eigen50 = o50 - sub50;
+  // Eén offertebedrag voor het hele project
+  const catTot = cat30 + cat50;
+  const subTot = sub30 + sub50;
+  const oTot = parseFloat(offerte) || 0;
+  const boven = Math.max(0, oTot - catTot);
+  const eigen = oTot - subTot;
 
   const mkTotaal = meerkosten.reduce((s, m) => s + (parseFloat(m.bedrag) || 0), 0);
-  const teSpecificeren = boven30 + boven50;
+  const teSpecificeren = boven;
   const nogTeSpec = teSpecificeren - mkTotaal;
 
   const voegMeerkostToe = () => setMeerkosten(m => [...m, { omschrijving: "", bedrag: "" }]);
@@ -239,9 +239,9 @@ export default function App() {
   const schipperPDF = () => {
     const mkRows = meerkosten.filter(m => m.omschrijving.trim() && parseFloat(m.bedrag) > 0).map(m => ({ omschrijving: m.omschrijving, bedrag: parseFloat(m.bedrag) }));
     const datum = new Date().toLocaleDateString("nl-NL", { day: "2-digit", month: "long", year: "numeric" });
-    const r30 = rows30.length > 0 ? { pct: 30, cat: cat30, subsidie: sub30, offerte: o30, boven: boven30, rows: rows30 } : null;
-    const r50 = rows50.length > 0 ? { pct: pct50, cat: cat50, subsidie: sub50, offerte: o50, boven: boven50, rows: rows50 } : null;
-    printPDF({ klant: klant || "Klant", adres, postcode, projNr, datum, r30, r50, mkRows });
+    const r30 = rows30.length > 0 ? { pct: 30, cat: cat30, subsidie: sub30, rows: rows30 } : null;
+    const r50 = rows50.length > 0 ? { pct: pct50, cat: cat50, subsidie: sub50, rows: rows50 } : null;
+    printPDF({ klant: klant || "Klant", adres, postcode, projNr, datum, r30, r50, mkRows, offerte: oTot, boven });
   };
 
   if (loading) return (
@@ -330,7 +330,7 @@ export default function App() {
                         <button key={v} onClick={() => setRegeling(v)} style={{ padding: "4px 10px", border: "none", background: regeling === v ? "rgba(255,255,255,0.3)" : "transparent", color: "white", fontSize: 11, fontWeight: regeling === v ? 800 : 400, cursor: "pointer" }}>{label}</button>
                       ))}
                     </div>
-                    <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 8, padding: "4px 12px", fontSize: 12, fontWeight: 700 }}>{sub50 > 0 ? "Subsidie: " + eur(sub50) : codes50.length + " geselecteerd"}</div>
+                    <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 8, padding: "4px 12px", fontSize: 12, fontWeight: 700 }}>{sub50 > 0 ? "Subsidie: " + eur(sub50) : (codes50.length + codesAdd.length) + " geselecteerd"}</div>
                   </div>
                 </div>
                 <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -399,7 +399,7 @@ export default function App() {
           )}
           {tab === "resultaat" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {codes30.length === 0 && codes50.length === 0 && (
+              {codes30.length === 0 && !has50 && (
                 <div style={{ background: "white", borderRadius: 12, padding: "32px", textAlign: "center", color: "#888" }}>Selecteer eerst maatregelen op het Maatregelen tabblad</div>
               )}
 
@@ -431,16 +431,11 @@ export default function App() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, padding: "12px 16px", background: "#fffdf0", borderRadius: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cataloguswaarde</span><span>{eur(cat30)}</span></div>
                     <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: GOLD, fontSize: 15 }}><span>Subsidie (30%)</span><span>{eur(sub30)}</span></div>
-                    {o30 > 0 && <>
-                      <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #eee", paddingTop: 6 }}><span>Schipper offerte</span><span>{eur(o30)}</span></div>
-                      {boven30 > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "#c0392b" }}><span>Meerkosten boven catalogus (niet subsidiabel)</span><span>{eur(boven30)}</span></div>}
-                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 14, color: RED }}><span>Eigen bijdrage klant</span><span>{eur(eigen30)}</span></div>
-                    </>}
                   </div>
                 </div>
               )}
 
-              {codes50.length > 0 && (
+              {has50 && (
                 <div style={{ background: "white", borderRadius: 12, padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.07)", borderTop: "3px solid " + RED }}>
                   <div style={{ fontSize: 13, fontWeight: 800, color: RED, marginBottom: 16 }}>{pct50}% Regeling</div>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, marginBottom: 16 }}>
@@ -480,16 +475,24 @@ export default function App() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, padding: "12px 16px", background: "#fff5f5", borderRadius: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cataloguswaarde (incl. bijkomende kosten)</span><span>{eur(cat50)}</span></div>
                     <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED, fontSize: 15 }}><span>Subsidie ({pct50}%)</span><span>{eur(sub50)}</span></div>
-                    {o50 > 0 && <>
-                      <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #eee", paddingTop: 6 }}><span>Schipper offerte</span><span>{eur(o50)}</span></div>
-                      {boven50 > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "#c0392b" }}><span>Meerkosten boven catalogus (niet subsidiabel)</span><span>{eur(boven50)}</span></div>}
-                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 14, color: RED }}><span>Eigen bijdrage klant</span><span>{eur(eigen50)}</span></div>
-                    </>}
                   </div>
                 </div>
               )}
 
-              {(codes30.length > 0 || codes50.length > 0) && (
+              {(codes30.length > 0 || has50) && (
+                <div style={{ background: "white", borderRadius: 12, padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.07)", borderTop: "3px solid #1a1a2e", display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}>Totaal project</div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cataloguswaarde totaal</span><span>{eur(catTot)}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED, fontSize: 15 }}><span>Subsidie totaal</span><span>{eur(subTot)}</span></div>
+                  {oTot > 0 && <>
+                    <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #eee", paddingTop: 6 }}><span>Schipper offerte</span><span>{eur(oTot)}</span></div>
+                    {boven > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "#c0392b" }}><span>Meerkosten boven catalogus (niet subsidiabel)</span><span>{eur(boven)}</span></div>}
+                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 14, color: RED }}><span>Eigen bijdrage klant</span><span>{eur(eigen)}</span></div>
+                  </>}
+                </div>
+              )}
+
+              {(codes30.length > 0 || has50) && (
                 <button onClick={() => schipperPDF()} style={{ width: "100%", padding: "12px", background: RED, color: "white", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer", fontSize: 14 }}>📄 Genereer Schipper PDF</button>
               )}
             </div>
@@ -499,7 +502,7 @@ export default function App() {
         <div style={{ borderLeft: "1px solid #eee", background: "white", padding: "20px", display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#aaa" }}>Live overzicht</div>
 
-          {codes30.length === 0 && codes50.length === 0 && (
+          {codes30.length === 0 && !has50 && (
             <div style={{ fontSize: 12, color: "#bbb", lineHeight: 1.6 }}>Selecteer maatregelen — de subsidie verschijnt hier direct.</div>
           )}
 
@@ -507,35 +510,32 @@ export default function App() {
             <div style={{ background: "#fffdf0", borderRadius: 10, padding: "14px", border: "1px solid " + GOLD }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: DARKGOLD, marginBottom: 8 }}>30% Triple glas</div>
               <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span>Cataloguswaarde</span><span style={{ fontWeight: 600 }}>{eur(cat30)}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: GOLD, marginBottom: 10 }}><span>Subsidie</span><span>{eur(sub30)}</span></div>
-              <label style={{ fontSize: 10, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 4 }}>Offerte incl. BTW</label>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontWeight: 700, color: "#555", fontSize: 13 }}>€</span>
-                <input type="number" value={off30} onChange={e => setOff30(e.target.value)} placeholder="0,00" style={{ flex: 1, padding: "7px 10px", border: "1.5px solid " + GOLD, borderRadius: 8, fontSize: 13, outline: "none" }} />
-              </div>
-              {o30 > 0 && (
-                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #eee", fontSize: 12 }}>
-                  {boven30 > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "#c0392b", marginBottom: 4 }}><span>Boven catalogus</span><span>{eur(boven30)}</span></div>}
-                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED }}><span>Eigen bijdrage</span><span>{eur(eigen30)}</span></div>
-                </div>
-              )}
+              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: GOLD }}><span>Subsidie</span><span>{eur(sub30)}</span></div>
             </div>
           )}
 
-          {codes50.length > 0 && (
+          {has50 && (
             <div style={{ background: "#fff5f5", borderRadius: 10, padding: "14px", border: "1px solid " + RED }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: RED, marginBottom: 8 }}>{pct50}% Regeling</div>
               <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span>Cataloguswaarde</span><span style={{ fontWeight: 600 }}>{eur(cat50)}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED, marginBottom: 10 }}><span>Subsidie</span><span>{eur(sub50)}</span></div>
-              <label style={{ fontSize: 10, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 4 }}>Offerte incl. BTW</label>
+              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED }}><span>Subsidie</span><span>{eur(sub50)}</span></div>
+            </div>
+          )}
+
+          {(codes30.length > 0 || has50) && (
+            <div style={{ background: "white", borderRadius: 10, padding: "14px", border: "1.5px solid #1a1a2e" }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#1a1a2e", marginBottom: 8 }}>Totaal project</div>
+              <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span>Cataloguswaarde</span><span style={{ fontWeight: 600 }}>{eur(catTot)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED, marginBottom: 10 }}><span>Subsidie totaal</span><span>{eur(subTot)}</span></div>
+              <label style={{ fontSize: 10, color: "#888", textTransform: "uppercase", display: "block", marginBottom: 4 }}>Offerte incl. BTW (totaal)</label>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ fontWeight: 700, color: "#555", fontSize: 13 }}>€</span>
-                <input type="number" value={off50} onChange={e => setOff50(e.target.value)} placeholder="0,00" style={{ flex: 1, padding: "7px 10px", border: "1.5px solid " + RED, borderRadius: 8, fontSize: 13, outline: "none" }} />
+                <input type="number" value={offerte} onChange={e => setOfferte(e.target.value)} placeholder="0,00" style={{ flex: 1, padding: "7px 10px", border: "1.5px solid #1a1a2e", borderRadius: 8, fontSize: 13, outline: "none" }} />
               </div>
-              {o50 > 0 && (
+              {oTot > 0 && (
                 <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #eee", fontSize: 12 }}>
-                  {boven50 > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "#c0392b", marginBottom: 4 }}><span>Boven catalogus</span><span>{eur(boven50)}</span></div>}
-                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED }}><span>Eigen bijdrage</span><span>{eur(eigen50)}</span></div>
+                  {boven > 0 && <div style={{ display: "flex", justifyContent: "space-between", color: "#c0392b", marginBottom: 4 }}><span>Boven catalogus</span><span>{eur(boven)}</span></div>}
+                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: RED }}><span>Eigen bijdrage</span><span>{eur(eigen)}</span></div>
                 </div>
               )}
             </div>
